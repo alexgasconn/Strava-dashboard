@@ -15,12 +15,13 @@ st.set_page_config(
 # Load data
 # activities_df = pd.read_csv(r'C:\Users\usuario\OneDrive\Escritorio\VS files\strava\activities.csv', encoding='latin-1', on_bad_lines='skip')
 
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+with st.sidebar:
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
-if uploaded_file is not None:
-    activities_df = pd.read_csv(uploaded_file, encoding='latin-1', on_bad_lines='skip')
-else:
-    st.warning("Please upload a CSV file to proceed.")
+    if uploaded_file is not None:
+        activities_df = pd.read_csv(uploaded_file, encoding='latin-1', on_bad_lines='skip')
+    else:
+        st.warning("Please upload a CSV file to proceed.")
 
 ## FEATURE ENGINEERING
 # Drop columns with all missing values
