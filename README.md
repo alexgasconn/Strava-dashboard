@@ -54,6 +54,9 @@ Once uploaded, the dashboard will automatically display your training data.
 > *(Add actual images in `/assets` or use relative paths as needed.)*
 
 ---
+## 🌐 Online view
+- 
+- - [Dashboard]([https://streamlit.io/](https://triathlon-dashboard.streamlit.app/)) – Online tool
 
 ## 🧠 Technologies
 
