@@ -55,8 +55,7 @@ Once uploaded, the dashboard will automatically display your training data.
 
 ---
 ## 🌐 Online view
-- 
-- - [Dashboard]([https://streamlit.io/](https://triathlon-dashboard.streamlit.app/)) – Online tool
+- [Dashboard](https://triathlon-dashboard.streamlit.app/) – Online tool
 
 ## 🧠 Technologies
 
