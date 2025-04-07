@@ -283,6 +283,7 @@ elif selected_tab == 'Running':
     run_df['Moving Time'] = run_df['Moving Time'] / 60
     run_df['Distance'] = run_df['Distance'] / 1000
     run_df['Pace'] = (run_df['Moving Time'] / (run_df['Distance'])).round(2)
+    st.write(run_df.head(10))
 
     run_df.sort_values('Pace', inplace=True)
     run_df['Average Heart Rate'].fillna(run_df['Average Heart Rate'].rolling(5, min_periods=1).mean(), inplace=True)
@@ -445,6 +446,131 @@ elif selected_tab == 'Running':
     ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
+
+
+
+    # Number of km (and days/months/years) for column Activity Gear in run_df
+
+    gear_summary = run_df.groupby('Activity Gear').agg(
+        Total_Distance=('Distance', 'sum'),
+        Total_Activities=('Activity Gear', 'count'),
+        First_Use=('Activity Date', 'min'),
+        Last_Use=('Activity Date', 'max')
+    ).reset_index()
+
+    gear_summary['Total_Distance'] = gear_summary['Total_Distance'].round(2)
+    gear_summary['Duration'] = (gear_summary['Last_Use'] - gear_summary['First_Use']).dt.days
+
+    st.markdown("### Activity Gear Summary")
+    st.dataframe(gear_summary)
+
+
+
+    # DISTANCE RECORDS
+    st.markdown("### Distance Records")
+
+    # Define distance categories and their margins
+    distance_categories = {
+        "1 Mile": 1.609,  # in km
+        "5K": 5,
+        "10K": 10,
+        "Half Marathon": 21.0975,
+        "Marathon": 42.195
+    }
+    margin_percentage = 0.075  # 7.5%
+
+    # Create a container for each distance category
+    for category, distance in distance_categories.items():
+        margin = distance * margin_percentage
+        lower_bound = distance - margin
+        upper_bound = distance + margin
+
+        # Filter runs within the margin
+        filtered_runs = run_df[
+            (run_df['Distance'] >= lower_bound) & (run_df['Distance'] <= upper_bound)
+        ].copy()
+
+        # Sort by pace (fastest first) and get the top 5
+        filtered_runs.sort_values('Pace', inplace=True)
+        top_5 = filtered_runs.head(5)
+
+        # Display results
+        st.markdown(f"#### {category} (±7.5%)")
+        if top_5.empty:
+            st.write("No records found.")
+        else:
+            for idx, row in top_5.iterrows():
+                st.write(
+                    f"**{row['Activity Date'].date()}** - {row['Distance']:.2f} km, "
+                    f"{row['Pace']} min/km, {row['Moving Time']:.2f} min"
+                )
+
+    col1, col2 = st.columns([6, 6])
+
+    with col1:
+        scatter = alt.Chart(run_df).mark_circle(size=60).encode(
+            x=alt.X('Distance', title='Distance (Km)', scale=alt.Scale(domain=[0, run_df['Distance'].max() + 5])),
+            y=alt.Y('Elevation Gain', title='Elevation Gain (m)', scale=alt.Scale(domain=[0, run_df['Elevation Gain'].max() + 50])),
+            color=alt.Color('Average Heart Rate:Q', scale=alt.Scale(scheme='viridis'), legend=None),
+            tooltip=['Distance', 'Elevation Gain', 'Average Heart Rate', 'Activity Date']
+        ).properties(
+            title='Distance vs Elevation Gain',
+            width=400,
+            height=400
+        ).interactive()
+
+        st.altair_chart(scatter, use_container_width=True)
+
+    with col2:
+        hist = alt.Chart(run_df).mark_bar().encode(
+            x=alt.X('Elevation Gain:Q', bin=alt.Bin(maxbins=20), title='Elevation Gain (m)'),
+            y=alt.Y('count()', title='Total Activities'),
+            color=alt.Color('Elevation Gain:Q', bin=alt.Bin(maxbins=20),
+                            scale=alt.Scale(scheme='plasma'), title='Elevation Gain', legend=None)
+        ).properties(
+            title='Elevation Gain Distribution',
+            width=400,
+            height=400
+        ).interactive()
+
+        st.altair_chart(hist, use_container_width=True)
+
+
+    # Weather conditions histogram
+    if 'Weather Condition' in run_df.columns:
+        weather_hist = alt.Chart(run_df).mark_bar().encode(
+            x=alt.X('Weather Condition:N', title='Weather Condition'),
+            y=alt.Y('count()', title='Total Activities'),
+            color=alt.Color('Weather Condition:N', scale=alt.Scale(scheme='category20'), legend=None),
+            tooltip=[alt.Tooltip('Weather Condition:N', title='Weather Condition'), alt.Tooltip('count()', title='Total Activities')]
+        ).properties(
+            title='Weather Conditions Distribution',
+            width=400,
+            height=400
+        )
+        st.altair_chart(weather_hist, use_container_width=True)
+    else:
+        st.warning("Weather data is not available in the dataset.")
+
+
+    #hours histogram
+    if 'Hour' in run_df.columns:
+        hour_hist = alt.Chart(run_df).mark_bar().encode(
+            x=alt.X('Hour:O', title='Hour of Day'),
+            y=alt.Y('count()', title='Total Activities'),
+            color=alt.Color('Hour:O', scale=alt.Scale(scheme='category10'), legend=None),
+            tooltip=[alt.Tooltip('Hour:O', title='Hour of Day'), alt.Tooltip('count()', title='Total Activities')]
+        ).properties(
+            title='Activities by Hour of Day',
+            width=400,
+            height=400
+        )
+        st.altair_chart(hour_hist, use_container_width=True)
+    
+
+
+
+
 
 
 ######################### SWIMMING TAB #########################
