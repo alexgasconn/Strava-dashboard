@@ -9,19 +9,24 @@ st.set_page_config(
     page_title="Strava Training Dashboard",
     page_icon="🏃🚴🏊🏋️‍♂️",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
-
-# Load data
-# activities_df = pd.read_csv(r'C:\Users\usuario\OneDrive\Escritorio\VS files\strava\activities.csv', encoding='latin-1', on_bad_lines='skip')
 
 with st.sidebar:
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
     if uploaded_file is not None:
-        activities_df = pd.read_csv(uploaded_file, encoding='latin-1', on_bad_lines='skip')
+        try:
+            activities_df = pd.read_csv(uploaded_file, encoding='latin-1', on_bad_lines='skip')
+            if activities_df.empty:
+                st.error("The uploaded CSV file is empty. Please upload a valid file.")
+                st.stop()  # Stop execution if the file is empty
+        except Exception as e:
+            st.error(f"An error occurred while reading the file: {e}")
+            st.stop()  # Stop execution if there's an error reading the file
     else:
         st.warning("Please upload a CSV file to proceed.")
+        st.stop()  # Stop execution if no file is uploaded
 
 ## FEATURE ENGINEERING
 # Drop columns with all missing values
