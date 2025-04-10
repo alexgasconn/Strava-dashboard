@@ -201,7 +201,7 @@ if selected_tab == 'General':
         selected_activity = st.selectbox("Activity Type", activity_options)
 
     with col2:
-        metric_option = st.radio("Metric", ["Moving Time", "Distance"], horizontal=True, label_visibility="visible")
+        metric_option = st.radio("Metric", ["Moving Time", "Distance", "Activities"], horizontal=True, label_visibility="visible")
 
     with col3:
         time_level = st.radio("View", ["Yearly (Monthly View)", "Monthly (Weekly View)"], horizontal=True, label_visibility="visible")
@@ -215,10 +215,13 @@ if selected_tab == 'General':
     # Apply metric
     if metric_option == "Moving Time":
         df_filtered["Metric"] = df_filtered["Moving Time"] / 3600  # Convert to hours
-        y_label = "Cumulative Moving Time (hrs)"
-    else:
+        y_label = "Moving Time (hrs)"
+    elif metric_option == "Distance":
         df_filtered["Metric"] = df_filtered["Distance"] / 1000  # Convert to km
-        y_label = "Cumulative Distance (km)"
+        y_label = "Distance (km)"
+    else:  # Activities
+        df_filtered["Metric"] = 1  # Count activities
+        y_label = "Number of Activities"
 
     with col4:
         if time_level == "Yearly (Monthly View)":
@@ -235,45 +238,64 @@ if selected_tab == 'General':
     if time_level == "Yearly (Monthly View)":
         for year in selected_values:
             temp = df_filtered[df_filtered['Year'] == year].copy()
-            monthly = temp.groupby('Month')['Metric'].sum().cumsum().reset_index()
+            monthly = temp.groupby('Month')['Metric'].sum().reset_index()
             monthly['Month'] = monthly['Month'].astype(int)
             monthly['MonthName'] = monthly['Month'].apply(lambda x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][x - 1])
             monthly['Year'] = year
+            monthly['CumulativeMetric'] = monthly['Metric'].cumsum()
             chart_data = pd.concat([chart_data, monthly])
 
         line = alt.Chart(chart_data).mark_line(point=True).encode(
             x=alt.X('MonthName:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], title='Month'),
-            y=alt.Y('Metric:Q', title=y_label),
+            y=alt.Y('CumulativeMetric:Q', title=f'Cumulative {y_label}'),
             color=alt.Color('Year:N'),
-            tooltip=['Year:N', 'MonthName:N', alt.Tooltip('Metric:Q', title=y_label)]
-        ).properties(
+            tooltip=['Year:N', 'MonthName:N', alt.Tooltip('CumulativeMetric:Q', title=f'Cumulative {y_label}')]
+        )
+
+        bars = alt.Chart(chart_data).mark_bar(opacity=0.4).encode(
+            x=alt.X('MonthName:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], title='Month'),
+            y=alt.Y('Metric:Q', title=f'{y_label}'),
+            color=alt.Color('Year:N'),
+            tooltip=['Year:N', 'MonthName:N', alt.Tooltip('Metric:Q', title=f'{y_label}')]
+        )
+
+        st.altair_chart((bars + line).properties(
             title=f'{y_label} by Month',
             width=600,
             height=400
-        )
-        st.altair_chart(line, use_container_width=True)
+        ), use_container_width=True)
 
-    else:  # Monthly (Daily View)
+    else:  # Monthly (Weekly View)
         for ym in selected_values:
             temp = df_filtered[df_filtered['YearMonthStr'] == ym].copy()
             temp['Day'] = temp['Activity Date'].dt.day
-            daily = temp.groupby('Day')['Metric'].sum().cumsum().reset_index()
+            daily = temp.groupby('Day')['Metric'].sum().reset_index()
             daily['YearMonth'] = ym
+            daily['CumulativeMetric'] = daily['Metric'].cumsum()
             chart_data = pd.concat([chart_data, daily])
 
         line = alt.Chart(chart_data).mark_line(point=True).encode(
             x=alt.X('Day:O', title='Day of Month', sort=list(range(1, 32))),
-            y=alt.Y('Metric:Q', title=y_label),
+            y=alt.Y('CumulativeMetric:Q', title=f'Cumulative {y_label}'),
             color=alt.Color('YearMonth:N'),
-            tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('Metric:Q', title=y_label)]
-        ).properties(
+            tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('CumulativeMetric:Q', title=f'Cumulative {y_label}')]
+        )
+
+        bars = alt.Chart(chart_data).mark_bar(opacity=0.4).encode(
+            x=alt.X('Day:O', title='Day of Month', sort=list(range(1, 32))),
+            y=alt.Y('Metric:Q', title=f'{y_label}'),
+            color=alt.Color('YearMonth:N'),
+            tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('Metric:Q', title=f'{y_label}')]
+        )
+
+        st.altair_chart((bars + line).properties(
             title=f'{y_label} by Day',
             width=600,
             height=400
-        )
-        st.altair_chart(line, use_container_width=True)
+        ), use_container_width=True)
 
 
 ######################### RUNNING TAB #########################
