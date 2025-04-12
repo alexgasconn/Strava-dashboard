@@ -775,6 +775,9 @@ elif selected_tab == 'Cycling':
     
     # Calculate speed in km/h
     bike_df['Speed'] = (bike_df['Distance'] / bike_df['Moving Time']).round(2)
+
+    bike_df['Elevation/km'] = (bike_df['Elevation Gain'] / bike_df['Distance']).round(2)
+    st.write(bike_df.sample(10))
     
     bike_df.sort_values('Speed', inplace=True)
     bike_df['Average Heart Rate'].fillna(
