@@ -783,8 +783,6 @@ elif selected_tab == 'Cycling':
     bike_df['Paved Distance'] = bike_df['Distance'] - bike_df['Dirt Distance']
     bike_df['Paved Distance'] = bike_df['Paved Distance'].clip(lower=0)  # Ensure no negative values
     bike_df['Dirt Distance'] = bike_df['Dirt Distance'].clip(lower=0)  # Ensure no negative values
-    st.write(bike_df[['Paved Distance', 'Dirt Distance']])# Fill NaN values with 0
-
 
 
     
@@ -861,7 +859,7 @@ elif selected_tab == 'Cycling':
         paved_percentage = (total_paved_distance / total_distance) * 100
         dirt_percentage = (total_dirt_distance / total_distance) * 100
         st.write(f"Total Paved Distance: {total_paved_distance:.2f} km ({paved_percentage:.2f}%)") 
-        st.write("Total Dirt Distance: {total_dirt_distance:.2f} km ({dirt_percentage:.2f}%)")
+        st.write(f"Total Dirt Distance: {total_dirt_distance:.2f} km ({dirt_percentage:.2f}%)")
 
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
