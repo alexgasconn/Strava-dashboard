@@ -254,12 +254,14 @@ if selected_tab == 'General':
             tooltip=['Year:N', 'MonthName:N', alt.Tooltip('CumulativeMetric:Q', title=f'Cumulative {y_label}')]
         )
 
-        bars = alt.Chart(chart_data).mark_bar(opacity=0.4).encode(
+        bars = alt.Chart(chart_data).mark_bar(opacity=0.8).encode(
             x=alt.X('MonthName:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], title='Month'),
             y=alt.Y('Metric:Q', title=f'{y_label}'),
             color=alt.Color('Year:N'),
             tooltip=['Year:N', 'MonthName:N', alt.Tooltip('Metric:Q', title=f'{y_label}')]
+        ).properties(
+            width=40  # Ajusta el ancho de las barras para que sean colindantes
         )
 
         st.altair_chart((bars + line).properties(
@@ -284,11 +286,13 @@ if selected_tab == 'General':
             tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('CumulativeMetric:Q', title=f'Cumulative {y_label}')]
         )
 
-        bars = alt.Chart(chart_data).mark_bar(opacity=0.4).encode(
+        bars = alt.Chart(chart_data).mark_bar(opacity=0.8).encode(
             x=alt.X('Day:O', title='Day of Month', sort=list(range(1, 32))),
             y=alt.Y('Metric:Q', title=f'{y_label}'),
             color=alt.Color('YearMonth:N'),
-            tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('Metric:Q', title=f'{y_label}')]
+            tooltip=['YearMonth:N', 'Day:O', alt.Tooltip('Metric:Q', title=f'{y_label}')],
+        ).properties(
+            width=15  # Ajusta el ancho de las barras para que sean colindantes
         )
 
         st.altair_chart((bars + line).properties(
@@ -699,10 +703,6 @@ elif selected_tab == 'Swimming':
             width=400,
             height=400
         ).interactive()
-        st.altair_chart(hist, use_container_width=True)
-
-    with col3:
-        # Top 3 longest swims and top 3 fastest swims
         top3_longest = swim_df.sort_values('Distance', ascending=False).head(3)
         top3_fastest = swim_df.sort_values('Pace').head(3)
         
