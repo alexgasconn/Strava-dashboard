@@ -373,6 +373,7 @@ elif selected_tab == 'Running':
 
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
+        # Prepare monthly data
         monthly_df = run_df.groupby('YearMonth').agg({
             'Distance': 'sum',
             'Moving Time': 'sum'
@@ -380,20 +381,51 @@ elif selected_tab == 'Running':
 
         monthly_df['YearMonth'] = monthly_df['YearMonth'].dt.to_timestamp()
 
+        # Generate a complete date range to include months with 0 values
+        full_date_range = pd.date_range(
+            start=monthly_df['YearMonth'].min(),
+            end=monthly_df['YearMonth'].max(),
+            freq='MS'
+        )
+        monthly_df = monthly_df.set_index('YearMonth').reindex(full_date_range).fillna(0).reset_index()
+        monthly_df.rename(columns={'index': 'YearMonth'}, inplace=True)
+
+        # Calculate cumulative distance and time
         monthly_df['Cumulative Distance'] = monthly_df['Distance'].cumsum()
         monthly_df['Cumulative Time'] = monthly_df['Moving Time'].cumsum()
 
-        area = alt.Chart(monthly_df).mark_area(
-            color='green',
-            interpolate='monotone'
-        ).encode(
-            x=alt.X('YearMonth:T', axis=alt.Axis(title='Month', tickCount=5)),
-            y='Cumulative Time'
-        ).properties(
-            title='Cumulative Time',
-            width=400,
-            height=400
-        ).interactive()
+        # Calculate rolling mean (3-month window)
+        monthly_df['RollingMean Distance'] = monthly_df['Distance'].rolling(window=3, min_periods=1).mean()
+        monthly_df['RollingMean Time'] = monthly_df['Moving Time'].rolling(window=3, min_periods=1).mean()
+
+        # Option to toggle between cumulative and rolling mean
+        view_option = st.radio("View Option:", ["Cumulative", "Rolling Mean"], horizontal=True)
+
+        if view_option == "Cumulative":
+            area = alt.Chart(monthly_df).mark_area(
+                color='green',
+                interpolate='monotone'
+            ).encode(
+                x=alt.X('YearMonth:T', axis=alt.Axis(title='Month', tickCount=5)),
+                y='Cumulative Time'
+            ).properties(
+                title='Cumulative Time',
+                width=400,
+                height=400
+            ).interactive()
+        else:
+            area = alt.Chart(monthly_df).mark_area(
+                color='blue',
+                interpolate='monotone'
+            ).encode(
+                x=alt.X('YearMonth:T', axis=alt.Axis(title='Month', tickCount=5)),
+                y='RollingMean Time'
+            ).properties(
+                title='Rolling Mean Time (3-Month Window)',
+                width=400,
+                height=400
+            ).interactive()
+
         st.altair_chart(area, use_container_width=True)
 
     with col2:
