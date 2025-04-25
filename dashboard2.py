@@ -553,7 +553,7 @@ elif selected_tab == 'Running':
         top_5 = filtered_runs.head(5)
 
         # Display results
-        st.markdown(f"#### {category} (±7.5%)")
+        st.markdown(f"#### {category}")
         if top_5.empty:
             st.write("No records found.")
         else:
