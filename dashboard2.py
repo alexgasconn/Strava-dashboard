@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 with st.sidebar:
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+    uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
 
     if uploaded_file is not None:
         try:
