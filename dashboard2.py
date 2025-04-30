@@ -1001,8 +1001,8 @@ elif selected_tab == 'Cycling':
 
 
 
-
-elif selected_tab == "Time and Weather":
+############################# TIME AND WEATHER TAB #########################
+elif selected_tab == "Time & Weather":
     st.markdown("### Time and Weather Analysis 🕒⛅")
     st.info("This section is still under construction, but already offers useful insights.")
 
