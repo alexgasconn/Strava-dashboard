@@ -6,7 +6,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 st.set_page_config(
-    page_title="Strava Training Dashboard",
+    page_title="Strava Triathlon Dashboard",
     page_icon="🏃🚴🏊🏋️‍♂️",
     layout="wide",
     initial_sidebar_state="expanded",
