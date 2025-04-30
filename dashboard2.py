@@ -66,9 +66,6 @@ if 'selected_tab' not in st.session_state:
 
 
 
-
-
-
 col1, col2 = st.columns([12, 3])
 with col1:
     st.markdown(
