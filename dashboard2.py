@@ -1088,4 +1088,4 @@ elif selected_tab == "Time & Weather":
         st.altair_chart(heatmap, use_container_width=True)
 
     st.markdown("---")
-    st.info("More advanced insights like temperature impact, sunrise time effects, and performance under rain will be added soon. 🚧")
+    st.info("More advanced insights like temperature impact, sunrise time effects, and performance under rain will be added soon! 🚧")
