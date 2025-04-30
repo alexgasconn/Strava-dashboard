@@ -85,7 +85,7 @@ with col1:
     unsafe_allow_html=True
     )
 
-    cols_nav = st.columns(4)
+    cols_nav = st.columns(5)
     if cols_nav[0].button("🏃🚴🏊"):
         st.session_state.selected_tab = "General"
     if cols_nav[1].button("🏃"):
