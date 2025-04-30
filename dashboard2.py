@@ -95,7 +95,7 @@ with col1:
     if cols_nav[3].button("🚴"):
         st.session_state.selected_tab = "Cycling"
     if cols_nav[4].button("🕒⛅"):
-        st.session_state.selected_tab = "Time and Weather"
+        st.session_state.selected_tab = "Time & Weather"
 
     selected_tab = st.session_state.selected_tab
 
