@@ -94,6 +94,8 @@ with col1:
         st.session_state.selected_tab = "Swimming"
     if cols_nav[3].button("🚴"):
         st.session_state.selected_tab = "Cycling"
+    if cols_nav[4].button("🕒⛅"):
+        st.session_state.selected_tab = "Time and Weather"
 
     selected_tab = st.session_state.selected_tab
 
@@ -1000,3 +1002,73 @@ elif selected_tab == 'Cycling':
 
 
 
+elif selected_tab == "Time and Weather":
+    st.write("### Time and Weather Analysis 🕒⛅")
+    st.info("This section is under construction, but here are some sneak previews of upcoming insights:")
+
+    with st.expander("🕐 Activity Distribution by Hour of Day"):
+        if 'Hour' in activities_df.columns:
+            hour_chart = alt.Chart(activities_df).mark_bar().encode(
+                x=alt.X('Hour:O', title='Hour of Day'),
+                y=alt.Y('count()', title='Number of Activities'),
+                color=alt.Color('Activity Type:N', legend=None),
+                tooltip=['Hour:O', 'count()']
+            ).properties(
+                width=600,
+                height=300,
+                title='Activity Start Times'
+            )
+            st.altair_chart(hour_chart, use_container_width=True)
+        else:
+            st.warning("No hour data available in your file.")
+
+    with st.expander("📅 Activity Frequency by Day of Week"):
+        dow_map = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        activities_df['DayOfWeekStr'] = activities_df['DayOfWeek'].map(lambda x: dow_map[x])
+        dow_chart = alt.Chart(activities_df).mark_bar().encode(
+            x=alt.X('DayOfWeekStr:N', title='Day of Week', sort=dow_map),
+            y=alt.Y('count()', title='Number of Activities'),
+            color=alt.Color('Activity Type:N', legend=None),
+            tooltip=['DayOfWeekStr:N', 'count()']
+        ).properties(
+            width=600,
+            height=300,
+            title='Weekly Activity Pattern'
+        )
+        st.altair_chart(dow_chart, use_container_width=True)
+
+    with st.expander("🌦️ Weather Insights (If Available)"):
+        if 'Weather Condition' in activities_df.columns:
+            weather_chart = alt.Chart(activities_df).mark_bar().encode(
+                x=alt.X('Weather Condition:N', title='Weather'),
+                y=alt.Y('count()', title='Number of Activities'),
+                color=alt.Color('Weather Condition:N', legend=None),
+                tooltip=['Weather Condition:N', 'count()']
+            ).properties(
+                width=600,
+                height=300,
+                title='Activities by Weather Condition'
+            )
+            st.altair_chart(weather_chart, use_container_width=True)
+        else:
+            st.warning("Weather data is not available in the dataset.")
+
+    with st.expander("📈 Combined: Hour vs Day Heatmap (Teaser)"):
+        if 'Hour' in activities_df.columns and 'DayOfWeekStr' in activities_df.columns:
+            heatmap_data = activities_df.groupby(['DayOfWeekStr', 'Hour']).size().reset_index(name='Count')
+            heatmap = alt.Chart(heatmap_data).mark_rect().encode(
+                x=alt.X('Hour:O'),
+                y=alt.Y('DayOfWeekStr:N', sort=dow_map),
+                color=alt.Color('Count:Q', scale=alt.Scale(scheme='blues')),
+                tooltip=['DayOfWeekStr', 'Hour', 'Count']
+            ).properties(
+                width=600,
+                height=300,
+                title='Activity Intensity: Hour vs Day of Week'
+            )
+            st.altair_chart(heatmap, use_container_width=True)
+        else:
+            st.warning("Missing hour or weekday data.")
+    
+    st.markdown("---")
+    st.info("More in-depth analyses like weather vs performance, time-of-day impact, and temperature correlations will be added soon. Stay tuned! 🚧")
