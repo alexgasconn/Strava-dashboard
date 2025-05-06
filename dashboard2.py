@@ -6,7 +6,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
 st.set_page_config(
-    page_title="Strava Training Dashboard",
+    page_title="Strava Triathlon Dashboard",
     page_icon="🏃🚴🏊🏋️‍♂️",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -63,9 +63,6 @@ bike_df = activities_df[activities_df['Activity Type'] == 'Ride']
 
 if 'selected_tab' not in st.session_state:
     st.session_state.selected_tab = "General"
-
-
-
 
 
 
@@ -1104,4 +1101,4 @@ elif selected_tab == "Time & Weather":
         st.altair_chart(heatmap, use_container_width=True)
 
     st.markdown("---")
-    st.info("More advanced insights like temperature impact, sunrise time effects, and performance under rain will be added soon. 🚧")
+    st.info("More advanced insights like temperature impact, sunrise time effects, and performance under rain will be added soon! 🚧")
