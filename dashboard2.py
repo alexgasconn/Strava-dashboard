@@ -1123,6 +1123,52 @@ elif selected_tab == "Time & Weather":
     )
 
     st.altair_chart(temp_chart, use_container_width=True)
+    # Calculate monthly averages for temperature, humidity, and wind speed
+    monthly_weather = activities_df.groupby('Month').agg({
+        'Weather Temperature': 'mean',
+        'Humidity': 'mean',
+        'Wind Speed': 'mean'
+    }).reset_index()
+
+    monthly_weather['MonthStr'] = monthly_weather['Month'].map({
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+        7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+    })
+
+    # Create the base chart for temperature
+    temp_chart = alt.Chart(monthly_weather).mark_bar(color='orange').encode(
+        x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+        y=alt.Y('Weather Temperature:Q', title='Average Temperature (°C)'),
+        tooltip=['MonthStr', 'Weather Temperature']
+    )
+
+    # Add a line for humidity
+    humidity_chart = alt.Chart(monthly_weather).mark_line(color='blue').encode(
+        x=alt.X('MonthStr:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+        y=alt.Y('Humidity:Q', title='Humidity (%)'),
+        tooltip=['MonthStr', 'Humidity']
+    )
+
+    # Add a line for wind speed
+    wind_chart = alt.Chart(monthly_weather).mark_line(color='grey').encode(
+        x=alt.X('MonthStr:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+        y=alt.Y('Wind Speed:Q', title='Wind Speed (km/h)'),
+        tooltip=['MonthStr', 'Wind Speed']
+    )
+
+    # Combine the charts
+    combined_chart = alt.layer(temp_chart, humidity_chart, wind_chart).resolve_scale(
+        y='independent'  # Allow independent y-axes for the metrics
+    ).properties(
+        title='Monthly Weather Metrics',
+        width=600,
+        height=400
+    )
+
+    st.altair_chart(combined_chart, use_container_width=True)
     # Heatmap Hour vs Day
     if 'Hour' in activities_df.columns and 'DayOfWeekStr' in activities_df.columns:
         heatmap_data = activities_df.groupby(['DayOfWeekStr', 'Hour']).size().reset_index(name='Count')
