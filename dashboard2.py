@@ -1103,7 +1103,26 @@ elif selected_tab == "Time & Weather":
                 height=400
             ).interactive()
             st.altair_chart(weather_chart, use_container_width=True)
+    # Calculate monthly average temperature
+    monthly_temp = activities_df.groupby('Month').agg({'Weather Temperature': 'mean'}).reset_index()
+    monthly_temp['MonthStr'] = monthly_temp['Month'].map({
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+        7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+    })
 
+    # Create the chart
+    temp_chart = alt.Chart(monthly_temp).mark_line(point=True).encode(
+        x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+        y=alt.Y('Weather Temperature:Q', title='Average Temperature (°C)'),
+        tooltip=['MonthStr', 'Weather Temperature']
+    ).properties(
+        title='Average Temperature by Month',
+        width=600,
+        height=400
+    )
+
+    st.altair_chart(temp_chart, use_container_width=True)
     # Heatmap Hour vs Day
     if 'Hour' in activities_df.columns and 'DayOfWeekStr' in activities_df.columns:
         heatmap_data = activities_df.groupby(['DayOfWeekStr', 'Hour']).size().reset_index(name='Count')
