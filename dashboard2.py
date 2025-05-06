@@ -1063,16 +1063,35 @@ elif selected_tab == "Time & Weather":
             # Map weather condition codes to descriptive labels
             weather_map = {
                 1: 'Clear',
-                2: 'Partly Cloudy',
-                3: 'Cloudy',
+                2: 'Cloudy',
+                3: 'Partly Cloudy',
                 4: 'Rainy',
-                5: 'Snowy',
-                6: 'Windy'
+                5: 'Windy',
+                6: 'Snowy'
             }
             activities_df['Weather Condition'] = activities_df['Weather Condition'].map(weather_map)
 
             # Filter out NULL values
             weather_filtered_df = activities_df[activities_df['Weather Condition'].notnull()]
+
+            # Heatmap: Weather Condition by Month
+            weather_filtered_df['MonthStr'] = weather_filtered_df['Month'].map({
+                1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+            })
+            weather_heatmap_data = weather_filtered_df.groupby(['MonthStr', 'Weather Condition']).size().reset_index(name='Count')
+            weather_heatmap = alt.Chart(weather_heatmap_data).mark_rect().encode(
+                x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+                y=alt.Y('Weather Condition:N', title='Weather Condition'),
+                color=alt.Color('Count:Q', scale=alt.Scale(scheme='reds'), title='Activity Count'),
+                tooltip=['MonthStr', 'Weather Condition', 'Count']
+            ).properties(
+                title='Heatmap: Weather Condition by Month',
+                width=600,
+                height=400
+            )
+            st.altair_chart(weather_heatmap, use_container_width=True)
             weather_chart = alt.Chart(weather_filtered_df).mark_bar().encode(
                 x=alt.X('Weather Condition:N', title='Weather'),
                 y=alt.Y('count()', title='Number of Activities'),
