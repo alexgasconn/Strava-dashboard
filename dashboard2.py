@@ -1063,7 +1063,20 @@ elif selected_tab == "Time & Weather":
     if 'Weather Condition' in activities_df.columns:
         col1, col2 = st.columns([6, 6])
         with col1:
-            weather_chart = alt.Chart(activities_df).mark_bar().encode(
+            # Map weather condition codes to descriptive labels
+            weather_map = {
+                1: 'Clear',
+                2: 'Partly Cloudy',
+                3: 'Cloudy',
+                4: 'Rainy',
+                5: 'Snowy',
+                6: 'Windy'
+            }
+            activities_df['Weather Condition'] = activities_df['Weather Condition'].map(weather_map)
+
+            # Filter out NULL values
+            weather_filtered_df = activities_df[activities_df['Weather Condition'].notnull()]
+            weather_chart = alt.Chart(weather_filtered_df).mark_bar().encode(
                 x=alt.X('Weather Condition:N', title='Weather'),
                 y=alt.Y('count()', title='Number of Activities'),
                 color=alt.Color('Weather Condition:N', legend=None),
