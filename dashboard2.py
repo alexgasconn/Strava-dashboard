@@ -1114,18 +1114,39 @@ elif selected_tab == "Time & Weather":
             7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
         })
         dow_map = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        heatmap_data['DayOfWeekStr'] = heatmap_data['DayOfWeek'].map(lambda x: dow_map[x])
         heatmap = alt.Chart(heatmap_data).mark_rect().encode(
             x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
-            y=alt.Y('DayOfWeek:O', title='Day of Week', sort=list(range(7)), axis=alt.Axis(labels=True, tickCount=7)),
+            y=alt.Y('DayOfWeekStr:N', title='Day of Week', sort=dow_map),
             color=alt.Color('Count:Q', scale=alt.Scale(scheme='greens'), title='Activity Count'),
-            tooltip=['MonthStr', 'DayOfWeek', 'Count']
+            tooltip=['MonthStr', 'DayOfWeekStr', 'Count']
         ).properties(
             title='Heatmap: Month vs Weekday Number of Activities',
             width=600,
             height=400
         )
         st.altair_chart(heatmap, use_container_width=True)
+
+        # Heatmap: Month vs Hour of Day
+        if 'Month' in activities_df.columns and 'Hour' in activities_df.columns:
+            heatmap_data = activities_df.groupby(['Month', 'Hour']).size().reset_index(name='Count')
+            heatmap_data['MonthStr'] = heatmap_data['Month'].map({
+                1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+            })
+            heatmap = alt.Chart(heatmap_data).mark_rect().encode(
+                x=alt.X('Hour:O', title='Hour of Day'),
+                y=alt.Y('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+                color=alt.Color('Count:Q', scale=alt.Scale(scheme='greens'), title='Activity Count'),
+                tooltip=['MonthStr', 'Hour', 'Count']
+            ).properties(
+                title='Heatmap: Month vs Hour of Day',
+                width=600,
+                height=400
+            )
+            st.altair_chart(heatmap, use_container_width=True)
 
     # Weather Condition
     if 'Weather Condition' in activities_df.columns:
