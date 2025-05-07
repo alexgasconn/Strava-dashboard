@@ -1106,18 +1106,39 @@ elif selected_tab == "Time & Weather":
             ).interactive()
             st.altair_chart(dow_chart, use_container_width=True)
 
+    # Heatmap: Month vs Weekday Number of Activities
+    if 'Month' in activities_df.columns and 'DayOfWeek' in activities_df.columns:
+        heatmap_data = activities_df.groupby(['Month', 'DayOfWeek']).size().reset_index(name='Count')
+        heatmap_data['MonthStr'] = heatmap_data['Month'].map({
+            1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+            7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+        })
+        dow_map = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        heatmap = alt.Chart(heatmap_data).mark_rect().encode(
+            x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+            y=alt.Y('DayOfWeek:O', title='Day of Week', sort=list(range(7)), axis=alt.Axis(labels=True, tickCount=7)),
+            color=alt.Color('Count:Q', scale=alt.Scale(scheme='greens'), title='Activity Count'),
+            tooltip=['MonthStr', 'DayOfWeek', 'Count']
+        ).properties(
+            title='Heatmap: Month vs Weekday Number of Activities',
+            width=600,
+            height=400
+        )
+        st.altair_chart(heatmap, use_container_width=True)
+
     # Weather Condition
     if 'Weather Condition' in activities_df.columns:
         col1, col2 = st.columns([6, 6])
         with col1:
-            # Map weather condition codes to descriptive labels
+            # Map weather condition codes to descriptive labels with emojis
             weather_map = {
-                1: 'Clear',
-                2: 'Cloudy',
-                3: 'Partly Cloudy',
-                4: 'Rainy',
-                5: 'Windy',
-                6: 'Snowy'
+                1: '☀️ Clear',
+                2: '☁️ Cloudy',
+                3: '⛅ Partly Cloudy',
+                4: '🌧️ Rainy',
+                5: '💨 Windy',
+                6: '❄️ Snowy'
             }
             activities_df['Weather Condition'] = activities_df['Weather Condition'].map(
                 weather_map)
@@ -1152,12 +1173,12 @@ elif selected_tab == "Time & Weather":
                 color=alt.Color('Weather Condition:N', legend=None),
                 tooltip=['Weather Condition:N', 'count()']
             ).properties(
-                title='Activities by Weather Condition',
+                title='Activities by Weather Condition 🌦️',
                 width=400,
                 height=400
             ).interactive()
             st.altair_chart(weather_chart, use_container_width=True)
-            
+
     # Calculate monthly average temperature
     monthly_temp = activities_df.groupby('Month').agg(
         {'Weather Temperature': 'mean'}).reset_index()
@@ -1187,7 +1208,7 @@ elif selected_tab == "Time & Weather":
     )
 
     # Add a line for humidity as an area chart with low alpha
-    humidity_chart = alt.Chart(monthly_weather).mark_area(color='blue', opacity=0.3).encode(
+    humidity_chart = alt.Chart(monthly_weather).mark_area(color='blue', opacity=0.1).encode(
         x=alt.X('MonthStr:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
         y=alt.Y('Humidity:Q', title='Humidity (%)'),
