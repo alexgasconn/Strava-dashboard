@@ -1167,6 +1167,87 @@ elif selected_tab == "Time & Weather":
             st.markdown("### Favorite Hour, Day, and Month for Top 5 Sports")
             for sport, hour, day, month in favorite_hour_day_month_sport:
                 st.write(f"**{sport}:** Favorite Hour: {hour}:00, Favorite Day: {day}, Favorite Month: {month}")
+    
+    # Additional Graphics for Weather and Time Sections
+
+    # Hourly Activity Distribution by Weather Condition
+    if 'Hour' in activities_df.columns and 'Weather Condition' in activities_df.columns:
+        hourly_weather_data = activities_df.groupby(['Hour', 'Weather Condition']).size().reset_index(name='Count')
+        hourly_weather_chart = alt.Chart(hourly_weather_data).mark_bar().encode(
+            x=alt.X('Hour:O', title='Hour of Day'),
+            y=alt.Y('Count:Q', title='Number of Activities'),
+            color=alt.Color('Weather Condition:N', title='Weather Condition'),
+            tooltip=['Hour:O', 'Weather Condition:N', 'Count:Q']
+        ).properties(
+            title='Hourly Activity Distribution by Weather Condition',
+            width=600,
+            height=400
+        )
+        st.altair_chart(hourly_weather_chart, use_container_width=True)
+
+    # Monthly Average Temperature vs Activity Count
+    if 'Month' in activities_df.columns and 'Weather Temperature' in activities_df.columns:
+        monthly_activity_temp = activities_df.groupby('Month').agg(
+            Activity_Count=('Activity Type', 'count'),
+            Avg_Temperature=('Weather Temperature', 'mean')
+        ).reset_index()
+        monthly_activity_temp['MonthStr'] = monthly_activity_temp['Month'].map({
+            1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+            7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+        })
+
+        activity_temp_chart = alt.Chart(monthly_activity_temp).mark_line(point=True).encode(
+            x=alt.X('MonthStr:N', title='Month', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+            y=alt.Y('Activity_Count:Q', title='Activity Count'),
+            color=alt.value('blue'),
+            tooltip=['MonthStr', 'Activity_Count', 'Avg_Temperature']
+        ).properties(
+            title='Monthly Activity Count vs Average Temperature',
+            width=600,
+            height=400
+        )
+
+        temp_line = alt.Chart(monthly_activity_temp).mark_line(strokeDash=[5, 5], color='orange').encode(
+            x=alt.X('MonthStr:N', sort=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']),
+            y=alt.Y('Avg_Temperature:Q', title='Average Temperature (°C)'),
+            tooltip=['MonthStr', 'Avg_Temperature']
+        )
+
+        st.altair_chart(activity_temp_chart + temp_line, use_container_width=True)
+
+    # Sunrise/Sunset Impact on Activities
+    if 'Hour' in activities_df.columns and 'Weather Sunrise' in activities_df.columns:
+        activities_df['Sunrise Impact'] = activities_df['Hour'] - pd.to_datetime(activities_df['Weather Sunrise']).dt.hour
+        sunrise_impact_chart = alt.Chart(activities_df).mark_bar().encode(
+            x=alt.X('Sunrise Impact:Q', bin=alt.Bin(maxbins=20), title='Hours from Sunrise'),
+            y=alt.Y('count()', title='Number of Activities'),
+            color=alt.Color('Activity Type:N', title='Activity Type'),
+            tooltip=['Sunrise Impact:Q', 'count()']
+        ).properties(
+            title='Impact of Sunrise on Activity Start Times',
+            width=600,
+            height=400
+        )
+        st.altair_chart(sunrise_impact_chart, use_container_width=True)
+
+    # Wind Speed vs Activity Count
+    if 'Wind Speed' in activities_df.columns:
+        wind_speed_data = activities_df.groupby(pd.cut(activities_df['Wind Speed'], bins=10)).size().reset_index(name='Count')
+        wind_speed_data['Wind Speed Range'] = wind_speed_data['Wind Speed'].astype(str)
+        wind_speed_chart = alt.Chart(wind_speed_data).mark_bar().encode(
+            x=alt.X('Wind Speed Range:N', title='Wind Speed (km/h)'),
+            y=alt.Y('Count:Q', title='Number of Activities'),
+            color=alt.Color('Count:Q', scale=alt.Scale(scheme='blues'), legend=None),
+            tooltip=['Wind Speed Range', 'Count']
+        ).properties(
+            title='Activity Count by Wind Speed',
+            width=600,
+            height=400
+        )
+        st.altair_chart(wind_speed_chart, use_container_width=True)
+    
     # Weather Condition
     if 'Weather Condition' in activities_df.columns:
         col1, col2 = st.columns([6, 6])
