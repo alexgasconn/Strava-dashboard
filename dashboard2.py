@@ -1247,7 +1247,60 @@ elif selected_tab == "Time & Weather":
             height=400
         )
         st.altair_chart(wind_speed_chart, use_container_width=True)
-    
+    # Advanced Weather Analysis: Temperature Impact on Performance
+    if 'Weather Temperature' in activities_df.columns and 'Moving Time' in activities_df.columns:
+        temp_performance_data = activities_df.groupby(pd.cut(activities_df['Weather Temperature'], bins=10)).agg(
+            Avg_Moving_Time=('Moving Time', 'mean'),
+            Avg_Distance=('Distance', 'mean')
+        ).reset_index()
+        temp_performance_data['Temperature Range'] = temp_performance_data['Weather Temperature'].astype(str)
+
+        temp_performance_chart = alt.Chart(temp_performance_data).mark_bar().encode(
+            x=alt.X('Temperature Range:N', title='Temperature Range (°C)'),
+            y=alt.Y('Avg_Moving_Time:Q', title='Average Moving Time (s)'),
+            color=alt.Color('Avg_Moving_Time:Q', scale=alt.Scale(scheme='reds'), legend=None),
+            tooltip=['Temperature Range', 'Avg_Moving_Time', 'Avg_Distance']
+        ).properties(
+            title='Impact of Temperature on Moving Time',
+            width=600,
+            height=400
+        )
+        st.altair_chart(temp_performance_chart, use_container_width=True)
+    if 'Weather Temperature' in activities_df.columns and 'Moving Time' in activities_df.columns:
+        temp_performance_data = activities_df.groupby(pd.cut(activities_df['Weather Temperature'], bins=10)).agg(
+            Avg_Moving_Time=('Moving Time', 'mean'),
+            Avg_Distance=('Distance', 'mean')
+        ).reset_index()
+        temp_performance_data['Temperature Range'] = temp_performance_data['Weather Temperature'].astype(str)
+
+        temp_performance_chart = alt.Chart(temp_performance_data).mark_bar().encode(
+            x=alt.X('Temperature Range:N', title='Temperature Range (°C)'),
+            y=alt.Y('Avg_Moving_Time:Q', title='Average Moving Time (s)'),
+            color=alt.Color('Avg_Moving_Time:Q', scale=alt.Scale(scheme='reds'), legend=None),
+            tooltip=['Temperature Range', 'Avg_Moving_Time', 'Avg_Distance']
+        ).properties(
+            title='Impact of Temperature on Moving Time',
+            width=600,
+            height=400
+        )
+        st.altair_chart(temp_performance_chart, use_container_width=True)
+
+    # Correlation Matrix for Weather and Performance Metrics
+    if {'Weather Temperature', 'Humidity', 'Wind Speed', 'Moving Time', 'Distance'}.issubset(activities_df.columns):
+        correlation_data = activities_df[['Weather Temperature', 'Humidity', 'Wind Speed', 'Moving Time', 'Distance']].corr()
+        correlation_chart = alt.Chart(correlation_data.reset_index().melt('index')).mark_rect().encode(
+            x=alt.X('index:N', title='Metric'),
+            y=alt.Y('variable:N', title='Metric'),
+            color=alt.Color('value:Q', scale=alt.Scale(scheme='viridis'), title='Correlation'),
+            tooltip=['index', 'variable', 'value']
+        ).properties(
+            title='Correlation Matrix: Weather and Performance Metrics',
+            width=600,
+            height=400
+        )
+        st.altair_chart(correlation_chart, use_container_width=True)
+
+
     # Weather Condition
     if 'Weather Condition' in activities_df.columns:
         col1, col2 = st.columns([6, 6])
