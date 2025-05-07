@@ -1148,6 +1148,25 @@ elif selected_tab == "Time & Weather":
             )
             st.altair_chart(heatmap, use_container_width=True)
 
+            # Favorite hour, day, month, and sport for the top 5 sports
+            top_sports = activities_df['Activity Type'].value_counts().head(5).index.tolist()
+
+            favorite_hour_day_month_sport = []
+            for sport in top_sports:
+                sport_df = activities_df[activities_df['Activity Type'] == sport]
+                favorite_hour = sport_df['Hour'].mode()[0] if 'Hour' in sport_df.columns else None
+                favorite_day = sport_df['DayOfWeek'].mode()[0] if 'DayOfWeek' in sport_df.columns else None
+                favorite_month = sport_df['Month'].mode()[0] if 'Month' in sport_df.columns else None
+                dow_map = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                             7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
+                favorite_day_str = dow_map[favorite_day] if favorite_day is not None else None
+                favorite_month_str = month_map[favorite_month] if favorite_month is not None else None
+                favorite_hour_day_month_sport.append((sport, favorite_hour, favorite_day_str, favorite_month_str))
+
+            st.markdown("### Favorite Hour, Day, and Month for Top 5 Sports")
+            for sport, hour, day, month in favorite_hour_day_month_sport:
+                st.write(f"**{sport}:** Favorite Hour: {hour}:00, Favorite Day: {day}, Favorite Month: {month}")
     # Weather Condition
     if 'Weather Condition' in activities_df.columns:
         col1, col2 = st.columns([6, 6])
