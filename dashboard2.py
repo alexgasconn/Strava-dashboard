@@ -558,15 +558,20 @@ elif selected_tab == 'Running':
 
     # Gantt Diagram: Gear Usage by Year-Month
     if 'Activity Gear' in run_df.columns:
-        gantt_data = run_df.groupby(['YearMonth', 'Activity Gear']).size().reset_index(name='Count')
+        gantt_data = run_df.groupby(['YearMonth', 'Activity Gear']).agg(
+            Count=('Activity Gear', 'size'),
+            Total_Distance=('Distance', 'sum')
+        ).reset_index()
         gantt_data['YearMonth'] = gantt_data['YearMonth'].dt.to_timestamp()
+
+        gantt_data['Cumulative Distance'] = gantt_data.groupby('Activity Gear')['Total_Distance'].cumsum()
 
         gantt_chart = alt.Chart(gantt_data).mark_rect().encode(
             x=alt.X('yearmonth(YearMonth):T', title='Year-Month', axis=alt.Axis(format='%b %Y'), 
-                    scale=alt.Scale(padding=0)),
+                scale=alt.Scale(padding=0)),
             y=alt.Y('Activity Gear:N', title='Gear', scale=alt.Scale(padding=0)),
-            color=alt.Color('Count:Q', scale=alt.Scale(scheme='greens'), title='Usage Count'),
-            tooltip=['yearmonth(YearMonth):T', 'Activity Gear:N', 'Count:Q']
+            color=alt.Color('Total_Distance:Q', scale=alt.Scale(scheme='greens'), title='Total Distance (km)'),
+            tooltip=['yearmonth(YearMonth):T', 'Activity Gear:N', 'Total_Distance:Q', 'Cumulative Distance:Q']
         ).properties(
             width=800,
             height=300,
@@ -574,8 +579,6 @@ elif selected_tab == 'Running':
         ).configure_view(
             stroke=None
         )
-
-
 
         st.altair_chart(gantt_chart, use_container_width=True)
     else:
