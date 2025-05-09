@@ -565,7 +565,7 @@ elif selected_tab == 'Running':
             x=alt.X('yearmonth(YearMonth):T', title='Year-Month', axis=alt.Axis(format='%b %Y'), 
                     scale=alt.Scale(padding=0)),
             y=alt.Y('Activity Gear:N', title='Gear', scale=alt.Scale(padding=0)),
-            color=alt.Color('Count:Q', scale=alt.Scale(scheme='Greens'), title='Usage Count'),
+            color=alt.Color('Count:Q', scale=alt.Scale(scheme='greens'), title='Usage Count'),
             tooltip=['yearmonth(YearMonth):T', 'Activity Gear:N', 'Count:Q']
         ).properties(
             width=800,
