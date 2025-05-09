@@ -34,8 +34,8 @@ with st.sidebar:
 # Drop columns with all missing values
 nan_cols = activities_df.columns[activities_df.isnull().all()]
 activities_df.drop(nan_cols, axis=1, inplace=True)
-activities_df = activities_df[activities_df['Activity Type'].isin(
-    ['Ride', 'Run', 'Swim', 'Weight Training'])]
+activities_df = activities_df[activities_df['Activity Type'].str.contains(
+    'Ride|Run|Swim|Weight Training', na=False)]
 
 activities_df['Distance'] = activities_df['Distance.1']
 activities_df.sort_values(by='Activity Date', inplace=True)
