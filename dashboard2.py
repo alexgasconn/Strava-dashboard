@@ -555,6 +555,33 @@ elif selected_tab == 'Running':
     st.markdown("### Activity Gear Summary")
     st.dataframe(gear_summary)
 
+
+    # Gantt Diagram: Gear Usage by Year-Month
+    if 'Activity Gear' in run_df.columns:
+        gantt_data = run_df.groupby(['YearMonth', 'Activity Gear']).size().reset_index(name='Count')
+        gantt_data['YearMonth'] = gantt_data['YearMonth'].dt.to_timestamp()
+
+        gantt_chart = alt.Chart(gantt_data).mark_rect().encode(
+            x=alt.X('yearmonth(YearMonth):T', title='Year-Month', axis=alt.Axis(format='%b %Y'), 
+                    scale=alt.Scale(padding=0)),
+            y=alt.Y('Activity Gear:N', title='Gear', scale=alt.Scale(padding=0)),
+            color=alt.Color('Count:Q', scale=alt.Scale(scheme='Greens'), title='Usage Count'),
+            tooltip=['yearmonth(YearMonth):T', 'Activity Gear:N', 'Count:Q']
+        ).properties(
+            width=800,
+            height=300,
+            title='Gear Usage by Year-Month (Square Style)'
+        ).configure_view(
+            stroke=None
+        )
+
+
+
+        st.altair_chart(gantt_chart, use_container_width=True)
+    else:
+        st.warning("Activity Gear data is not available in the dataset.")
+
+
     # DISTANCE RECORDS
     st.markdown("### Distance Records")
 
