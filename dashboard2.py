@@ -660,39 +660,6 @@ elif selected_tab == 'Running':
 
         st.altair_chart(hist, use_container_width=True)
 
-    # Weather conditions histogram
-    if 'Weather Condition' in run_df.columns:
-        weather_hist = alt.Chart(run_df).mark_bar().encode(
-            x=alt.X('Weather Condition:N', title='Weather Condition'),
-            y=alt.Y('count()', title='Total Activities'),
-            color=alt.Color('Weather Condition:N', scale=alt.Scale(
-                scheme='category20'), legend=None),
-            tooltip=[alt.Tooltip('Weather Condition:N', title='Weather Condition'), alt.Tooltip(
-                'count()', title='Total Activities')]
-        ).properties(
-            title='Weather Conditions Distribution',
-            width=400,
-            height=400
-        )
-        st.altair_chart(weather_hist, use_container_width=True)
-    else:
-        st.warning("Weather data is not available in the dataset.")
-
-    # hours histogram
-    if 'Hour' in run_df.columns:
-        hour_hist = alt.Chart(run_df).mark_bar().encode(
-            x=alt.X('Hour:O', title='Hour of Day'),
-            y=alt.Y('count()', title='Total Activities'),
-            color=alt.Color('Hour:O', scale=alt.Scale(
-                scheme='category10'), legend=None),
-            tooltip=[alt.Tooltip('Hour:O', title='Hour of Day'), alt.Tooltip(
-                'count()', title='Total Activities')]
-        ).properties(
-            title='Activities by Hour of Day',
-            width=400,
-            height=400
-        )
-        st.altair_chart(hour_hist, use_container_width=True)
 
 
 ######################### SWIMMING TAB #########################
