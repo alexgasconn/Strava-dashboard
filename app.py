@@ -7,8 +7,12 @@ st.set_page_config(page_title="Strava Triathlon Dashboard", layout="wide", initi
 
 with st.sidebar:
     uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
+    use_example = st.checkbox("Use example file")
     if uploaded_file:
         df = pd.read_csv(uploaded_file, encoding='latin-1', on_bad_lines='skip')
+        df = preprocess_data(df)
+    elif use_example:
+        df = pd.read_csv("activities.csv", encoding='latin-1', on_bad_lines='skip')
         df = preprocess_data(df)
     else:
         st.stop()
