@@ -334,7 +334,7 @@ def render(df):
                         f"{row['Pace']} min/km, {row['Moving Time']:.2f} min"
                     )
 
-        col1, col2 = st.columns([6, 6])
+    col1, col2 = st.columns([6, 6])
 
     with col2:
         # Riegel predictor: predict times for all categories from each best distance
