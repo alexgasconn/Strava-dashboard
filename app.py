@@ -25,5 +25,29 @@ tabs = {
     "🚴 Cycling": cycling,
     "🕒⛅ Time & Weather": time_weather,
 }
+
+tab_labels = list(tabs.keys())
+tab_objects = st.tabs(tab_labels)
+for tab_obj, tab_label in zip(tab_objects, tab_labels):
+    with tab_obj:
+        tabs[tab_label].render(df)
+        
+# Time filter
+if 'start_date' in df.columns:
+    min_date = pd.to_datetime(df['start_date']).min()
+    max_date = pd.to_datetime(df['start_date']).max()
+    start, end = st.sidebar.date_input(
+        "Filter by date range",
+        [min_date, max_date],
+        min_value=min_date,
+        max_value=max_date
+    )
+    if isinstance(start, pd.Timestamp):
+        start = start.date()
+    if isinstance(end, pd.Timestamp):
+        end = end.date()
+    mask = (pd.to_datetime(df['start_date']).dt.date >= start) & (pd.to_datetime(df['start_date']).dt.date <= end)
+    df = df.loc[mask]
+
 selected = st.radio("Select Tab", list(tabs.keys()), horizontal=True)
 tabs[selected].render(df)
