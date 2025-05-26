@@ -292,114 +292,85 @@ def render(df):
         st.warning("Activity Gear data is not available in the dataset.")
 
 
-    # DISTANCE RECORDS
     col1, col2 = st.columns([6, 6])
+
+    # Distance definitions and margin
+    distance_categories = {
+        "1 Mile": 1.609,
+        "5K": 5,
+        "10K": 10,
+        "Half Marathon": 21.0975,
+        "Marathon": 42.195
+    }
+    margin_percentage = 0.075
+
+    def riegel_predictor(distance, time, target_distance):
+        return time * (target_distance / distance) ** 1.06
+
     with col1:
-        st.markdown("### Distance Records")
-
-        # Define distance categories and their margins
-        distance_categories = {
-            "1 Mile": 1.609,  # in km
-            "5K": 5,
-            "10K": 10,
-            "Half Marathon": 21.0975,
-            "Marathon": 42.195
-        }
-        margin_percentage = 0.075  # 7.5%
-
-        # Create a container for each distance category
+        st.markdown("### 🏃‍♂️ Top Real Performances")
         for category, distance in distance_categories.items():
             margin = distance * margin_percentage
-            lower_bound = distance - margin
-            upper_bound = distance + margin
+            lower = distance - margin
+            upper = distance + margin
 
-            # Filter runs within the margin
             filtered_runs = run_df[
-                (run_df['Distance'] >= lower_bound) & (
-                    run_df['Distance'] <= upper_bound)
+                (run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)
             ].copy()
-
-            # Sort by pace (fastest first) and get the top 5
             filtered_runs.sort_values('Pace', inplace=True)
             top_5 = filtered_runs.head(5)
 
-            # Display results
             st.markdown(f"#### {category}")
             if top_5.empty:
                 st.write("No records found.")
             else:
-                for idx, row in top_5.iterrows():
+                for i, (_, row) in enumerate(top_5.iterrows()):
+                    emoji = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else ""
                     st.write(
-                        f"**{row['Activity Date'].date()}** - {row['Distance']:.2f} km, "
+                        f"{emoji} **{row['Activity Date'].date()}** - {row['Distance']:.2f} km, "
                         f"{row['Pace']} min/km, {row['Moving Time']:.2f} min"
                     )
 
-    col1, col2 = st.columns([6, 6])
-
     with col2:
-        # Riegel predictor: predict times for all categories from each best distance
-        st.markdown("### Riegel Predictor")
+        st.markdown("### 🔮 Riegel Predictions (Range from Top 5)")
 
-        def riegel_predictor(distance, time, target_distance):
-            """Predict time for a target distance using Riegel's formula."""
-            return time * (target_distance / distance) ** 1.06
+        for base_name, base_dist in distance_categories.items():
+            margin = base_dist * margin_percentage
+            lower = base_dist - margin
+            upper = base_dist + margin
 
-        # Define distance categories (in km)
-        distance_categories = {
-            "1 Mile": 1.609,
-            "5K": 5,
-            "10K": 10,
-            "Half Marathon": 21.0975,
-            "Marathon": 42.195
-        }
+            filtered_runs = run_df[
+                (run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)
+            ].copy()
+            filtered_runs.sort_values('Pace', inplace=True)
+            top_5 = filtered_runs.head(5)
 
-        # Find best (fastest) time for each category (within 7.5% margin)
-        margin_percentage = 0.075
-        best_times = {}
-        for name, dist in distance_categories.items():
-            margin = dist * margin_percentage
-            lower = dist - margin
-            upper = dist + margin
-            filtered = run_df[(run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)]
-            if not filtered.empty:
-                best_row = filtered.loc[filtered['Moving Time'].idxmin()]
-                best_times[name] = {
-                    "distance": best_row['Distance'],
-                    "time_min": best_row['Moving Time'],  # in minutes
-                    "date": best_row['Activity Date']
-                }
+            if top_5.empty:
+                continue
 
-        # For each best time, predict times for all categories
-        predictions = {}
-        for base_name, base_info in best_times.items():
-            base_dist = base_info["distance"]
-            base_time = base_info["time_min"]
-            preds = {}
-            for target_name, target_dist in distance_categories.items():
-                pred_time = riegel_predictor(base_dist, base_time, target_dist)
-                preds[target_name] = pred_time
-            predictions[base_name] = {
-                "date": base_info["date"],
-                "actual_time": base_time,
-                "predictions": preds
-            }
+            st.markdown(f"#### From {base_name}")
+            preds_by_target = {target: [] for target in distance_categories if target != base_name}
 
-        # Display as a table
-        st.markdown("#### Riegel Predicted Times (minutes) for Each Distance")
-        pred_table = []
-        for base_name, info in predictions.items():
-            row = {
-                "From": base_name,
-                "Best Time (min)": f"{info['actual_time']:.2f}",
-                "Date": info["date"].date()
-            }
-            for target_name in distance_categories.keys():
-                row[target_name] = f"{info['predictions'][target_name]:.2f}"
-            pred_table.append(row)
+            for _, row in top_5.iterrows():
+                time = row['Moving Time']
+                dist = row['Distance']
+                for target_name, target_dist in distance_categories.items():
+                    if target_name == base_name:
+                        continue
+                    pred_time = riegel_predictor(dist, time, target_dist)
+                    preds_by_target[target_name].append(pred_time)
 
-        st.dataframe(pd.DataFrame(pred_table))
+            for target_name, pred_list in preds_by_target.items():
+                min_time = min(pred_list)
+                max_time = max(pred_list)
+                avg_time = sum(pred_list) / len(pred_list)
+                st.write(
+                    f"→ **{target_name}**: {avg_time:.2f} min  _(range: {min_time:.2f} – {max_time:.2f})_"
+                )
 
-            
+
+    
+    col1, col2 = st.columns([6, 6])
 
     with col1:
         scatter = alt.Chart(run_df).mark_circle(size=60).encode(
