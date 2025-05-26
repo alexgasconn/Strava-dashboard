@@ -26,7 +26,9 @@ def render(df):
 
     with col2:
         if 'DayOfWeek' in df.columns:
-            df['DayOfWeekStr'] = df['DayOfWeek'].map(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
+            day_map = {0: 'Mon', 1: 'Tue', 2: 'Wed', 3: 'Thu', 4: 'Fri', 5: 'Sat', 6: 'Sun'}
+            df['DayOfWeekStr'] = df['DayOfWeek'].map(day_map)
+
             chart = alt.Chart(df).mark_bar().encode(
                 x=alt.X('DayOfWeekStr:N', title='Day of Week', sort=['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
                 y=alt.Y('count()', title='Number of Activities'),
