@@ -227,3 +227,50 @@ def render(df):
     ).interactive()
 
     st.altair_chart(chart, use_container_width=True)
+
+    st.dataframe(bike_df)
+
+    # Number of km (and days/months/years) for column Activity Gear in bike_df
+
+    gear_summary = bike_df.groupby('Activity Gear').agg(
+        Total_Distance=('Distance', 'sum'),
+        Total_Activities=('Activity Gear', 'count'),
+        First_Use=('Activity Date', 'min'),
+        Last_Use=('Activity Date', 'max')
+    ).reset_index()
+
+    gear_summary['Total_Distance'] = gear_summary['Total_Distance'].round(2)
+    gear_summary['Duration'] = (
+        gear_summary['Last_Use'] - gear_summary['First_Use']).dt.days
+
+    st.markdown("### Activity Gear Summary")
+    st.dataframe(gear_summary)
+
+
+    # Gantt Diagram: Gear Usage by Year-Month
+    if 'Activity Gear' in bike_df.columns:
+        gantt_data = bike_df.groupby(['YearMonth', 'Activity Gear']).agg(
+            Count=('Activity Gear', 'size'),
+            Total_Distance=('Distance', 'sum')
+        ).reset_index()
+        gantt_data['YearMonth'] = gantt_data['YearMonth'].dt.to_timestamp()
+
+        gantt_data['Cumulative Distance'] = gantt_data.groupby('Activity Gear')['Total_Distance'].cumsum()
+
+        gantt_chart = alt.Chart(gantt_data).mark_rect().encode(
+            x=alt.X('yearmonth(YearMonth):T', title='Year-Month', axis=alt.Axis(format='%b %Y'), 
+                scale=alt.Scale(padding=0)),
+            y=alt.Y('Activity Gear:N', title='Gear', scale=alt.Scale(padding=0)),
+            color=alt.Color('Total_Distance:Q', scale=alt.Scale(scheme='greens'), title='Total Distance (km)'),
+            tooltip=['yearmonth(YearMonth):T', 'Activity Gear:N', 'Total_Distance:Q', 'Cumulative Distance:Q']
+        ).properties(
+            width=800,
+            height=300,
+            title='Gear Usage by Year-Month (Square Style)'
+        ).configure_view(
+            stroke=None
+        )
+
+        st.altair_chart(gantt_chart, use_container_width=True)
+    else:
+        st.warning("Activity Gear data is not available in the dataset.")
