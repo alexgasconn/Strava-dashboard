@@ -334,24 +334,39 @@ def render(df):
                 )
 
         with col2:
-            st.markdown(f"#### From {category_name}")
-            prediction_ranges = {}
-            for _, row in top_5.iterrows():
-                time = row['Moving Time']
-                dist = row['Distance']
-                for target_name, target_dist in distance_categories.items():
-                    if target_name == category_name:
-                        continue
-                    pred_time = riegel_predictor(dist, time, target_dist)
-                    prediction_ranges.setdefault(target_name, []).append(pred_time)
+            st.markdown("### 🔮 Riegel Predictions (from all top 5 times)")
 
-            for target_name, preds in prediction_ranges.items():
+            all_predictions = {key: [] for key in distance_categories.keys()}
+
+            for base_name, base_dist in distance_categories.items():
+                margin = base_dist * margin_percentage
+                lower = base_dist - margin
+                upper = base_dist + margin
+
+                filtered = run_df[(run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)].copy()
+                filtered.sort_values('Pace', inplace=True)
+                top_5 = filtered.head(5)
+
+                for _, row in top_5.iterrows():
+                    time = row['Moving Time']
+                    dist = row['Distance']
+                    for target_name, target_dist in distance_categories.items():
+                        pred = riegel_predictor(dist, time, target_dist)
+                        all_predictions[target_name].append(pred)
+
+            st.markdown("### Predictions:")
+            for target_name in distance_categories.keys():
+                preds = all_predictions[target_name]
+                if len(preds) == 0:
+                    continue
+                avg_pred = sum(preds) / len(preds)
                 min_pred = min(preds)
                 max_pred = max(preds)
-                avg_pred = sum(preds) / len(preds)
                 st.write(
-                    f"→ **{target_name}**: {avg_pred:.2f} min  _(range: {min_pred:.2f}–{max_pred:.2f})_"
+                    f"**{target_name}**:\n"
+                    f"{avg_pred:.2f} min _(range: {min_pred:.2f}–{max_pred:.2f})_"
                 )
+
 
 
 
