@@ -294,7 +294,6 @@ def render(df):
 
     col1, col2 = st.columns([6, 6])
 
-    # Distance definitions and margin
     distance_categories = {
         "1 Mile": 1.609,
         "5K": 5,
@@ -308,65 +307,52 @@ def render(df):
         return time * (target_distance / distance) ** 1.06
 
     with col1:
-        st.markdown("### 🏃‍♂️ Top Real Performances")
-        for category, distance in distance_categories.items():
-            margin = distance * margin_percentage
-            lower = distance - margin
-            upper = distance + margin
-
-            filtered_runs = run_df[
-                (run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)
-            ].copy()
-            filtered_runs.sort_values('Pace', inplace=True)
-            top_5 = filtered_runs.head(5)
-
-            st.markdown(f"#### {category}")
-            if top_5.empty:
-                st.write("No records found.")
-            else:
-                for i, (_, row) in enumerate(top_5.iterrows()):
-                    emoji = "🥇" if i == 0 else "🥈" if i == 1 else "🥉" if i == 2 else ""
-                    st.write(
-                        f"{emoji} **{row['Activity Date'].date()}** - {row['Distance']:.2f} km, "
-                        f"{row['Pace']} min/km, {row['Moving Time']:.2f} min"
-                    )
-
+        st.markdown("### 🏁 Top Real Performances")
     with col2:
-        st.markdown("### 🔮 Riegel Predictions (Range from Top 5)")
+        st.markdown("### 🔮 Riegel Predictions from Top 5")
 
-        for base_name, base_dist in distance_categories.items():
-            margin = base_dist * margin_percentage
-            lower = base_dist - margin
-            upper = base_dist + margin
+    for category_name, base_dist in distance_categories.items():
+        margin = base_dist * margin_percentage
+        lower_bound = base_dist - margin
+        upper_bound = base_dist + margin
 
-            filtered_runs = run_df[
-                (run_df['Distance'] >= lower) & (run_df['Distance'] <= upper)
-            ].copy()
-            filtered_runs.sort_values('Pace', inplace=True)
-            top_5 = filtered_runs.head(5)
+        filtered = run_df[(run_df['Distance'] >= lower_bound) & (run_df['Distance'] <= upper_bound)].copy()
+        filtered.sort_values('Pace', inplace=True)
+        top_5 = filtered.head(5)
 
-            if top_5.empty:
-                continue
+        if top_5.empty:
+            continue
 
-            st.markdown(f"#### From {base_name}")
-            preds_by_target = {target: [] for target in distance_categories if target != base_name}
+        with col1:
+            st.markdown(f"#### {category_name}")
+            medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
+            for i, (_, row) in enumerate(top_5.iterrows()):
+                emoji = medals[i] if i < len(medals) else ""
+                st.write(
+                    f"{emoji} **{row['Activity Date'].date()}** — {row['Distance']:.2f} km, "
+                    f"{row['Pace']} min/km, {row['Moving Time']:.2f} min"
+                )
 
+        with col2:
+            st.markdown(f"#### From {category_name}")
+            prediction_ranges = {}
             for _, row in top_5.iterrows():
                 time = row['Moving Time']
                 dist = row['Distance']
                 for target_name, target_dist in distance_categories.items():
-                    if target_name == base_name:
+                    if target_name == category_name:
                         continue
                     pred_time = riegel_predictor(dist, time, target_dist)
-                    preds_by_target[target_name].append(pred_time)
+                    prediction_ranges.setdefault(target_name, []).append(pred_time)
 
-            for target_name, pred_list in preds_by_target.items():
-                min_time = min(pred_list)
-                max_time = max(pred_list)
-                avg_time = sum(pred_list) / len(pred_list)
+            for target_name, preds in prediction_ranges.items():
+                min_pred = min(preds)
+                max_pred = max(preds)
+                avg_pred = sum(preds) / len(preds)
                 st.write(
-                    f"→ **{target_name}**: {avg_time:.2f} min  _(range: {min_time:.2f} – {max_time:.2f})_"
+                    f"→ **{target_name}**: {avg_pred:.2f} min  _(range: {min_pred:.2f}–{max_pred:.2f})_"
                 )
+
 
 
     
