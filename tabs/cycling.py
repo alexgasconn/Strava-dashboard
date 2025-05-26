@@ -124,6 +124,14 @@ def render(df):
 
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
+        # Option to select between cumulative sum or rolling mean
+        plot_type = st.radio(
+            "Plot Type", 
+            options=["Cumulative", "Rolling Mean"], 
+            index=0, 
+            horizontal=True
+        )
+
         monthly_df = bike_df.groupby('YearMonth').agg({
             'Distance': 'sum',
             'Moving Time': 'sum'
@@ -131,17 +139,33 @@ def render(df):
 
         monthly_df['YearMonth'] = monthly_df['YearMonth'].dt.to_timestamp()
 
-        monthly_df['Cumulative Distance'] = monthly_df['Distance'].cumsum()
-        monthly_df['Cumulative Time'] = monthly_df['Moving Time'].cumsum()
+        if plot_type == "Cumulative":
+            monthly_df['Cumulative Distance'] = monthly_df['Distance'].cumsum()
+            monthly_df['Cumulative Time'] = monthly_df['Moving Time'].cumsum()
+            y_field = 'Cumulative Time'
+            title = 'Cumulative Time'
+        else:
+            # Rolling mean, including zeros (months with no activity)
+            # First, create a complete monthly index
+            all_months = pd.date_range(
+                start=monthly_df['YearMonth'].min(),
+                end=monthly_df['YearMonth'].max(),
+                freq='MS'
+            )
+            monthly_df = monthly_df.set_index('YearMonth').reindex(all_months, fill_value=0).reset_index()
+            monthly_df.rename(columns={'index': 'YearMonth'}, inplace=True)
+            monthly_df['Rolling Mean Time'] = monthly_df['Moving Time'].rolling(window=3, min_periods=1).mean()
+            y_field = 'Rolling Mean Time'
+            title = 'Rolling Mean of Time (3 months)'
 
         area = alt.Chart(monthly_df).mark_area(
             color='brown',
             interpolate='monotone'
         ).encode(
             x=alt.X('YearMonth:T', axis=alt.Axis(title='Month', tickCount=5)),
-            y='Cumulative Time'
+            y=alt.Y(y_field, title='Time (hours)')
         ).properties(
-            title='Cumulative Time',
+            title=title,
             width=400,
             height=400
         ).interactive()
@@ -274,3 +298,20 @@ def render(df):
         st.altair_chart(gantt_chart, use_container_width=True)
     else:
         st.warning("Activity Gear data is not available in the dataset.")
+
+
+    # Scatter plot: Max Speed vs Average Speed
+    if 'Max Speed' in bike_df.columns:
+        st.markdown("### Max Speed vs Average Speed")
+        scatter_speed = alt.Chart(bike_df).mark_circle(size=60, color='teal').encode(
+            x=alt.X('Speed', title='Average Speed (km/h)'),
+            y=alt.Y('Max Speed', title='Max Speed (km/h)'),
+            tooltip=['Speed', 'Max Speed', 'Distance', 'Activity Date']
+        ).properties(
+            width=500,
+            height=400,
+            title='Max Speed vs Average Speed'
+        ).interactive()
+        st.altair_chart(scatter_speed, use_container_width=True)
+    else:
+        st.info("Max Speed data is not available in the dataset.")
