@@ -1,0 +1,18 @@
+[server]
+headless = true
+port = 8501
+enableCORS = false
+fileWatcherType = "poll"
+
+[server.runOnSave]
+default = true
+
+[browser]
+serverAddress = "localhost"
+
+[theme]
+base = "light"
+
+# Lo importante:
+[general]
+mainPage = "app.py"
