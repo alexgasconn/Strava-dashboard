@@ -93,6 +93,8 @@ def render(df):
         st.write(f"\ud83d\udccc **Racha actual de días**: {current_day_streak_live} días")
         st.write(f"\ud83d\udcc6 **Racha actual de semanas**: {current_week_streak_live} semanas")
 
+
+    
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
         # Prepare monthly data
