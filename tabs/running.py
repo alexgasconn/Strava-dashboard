@@ -87,11 +87,11 @@ def render(df):
                 break
         current_week_streak_live = streak
 
-        st.markdown("### \ud83c\udf01 Running Streaks")
-        st.write(f"\ud83c\udfc5 **Mayor racha de días seguidos corriendo**: {max_day_streak} días")
-        st.write(f"\ud83d\udcc5 **Mayor racha de semanas seguidas corriendo**: {max_week_streak} semanas")
-        st.write(f"\ud83d\udccc **Racha actual de días**: {current_day_streak_live} días")
-        st.write(f"\ud83d\udcc6 **Racha actual de semanas**: {current_week_streak_live} semanas")
+        st.markdown("### Running Streaks")
+        st.write(f"🏅 **Mayor racha de días seguidos corriendo**: {max_day_streak} días")
+        st.write(f"📅 **Mayor racha de semanas seguidas corriendo**: {max_week_streak} semanas")
+        st.write(f"📌 **Racha actual de días**: {current_day_streak_live} días")
+        st.write(f"📆 **Racha actual de semanas**: {current_week_streak_live} semanas")
 
 
     
