@@ -103,6 +103,66 @@ def render(df):
         st.write(f"Total Time: {total_time:.2f} hours")
         st.write(f"Total Elevation: {total_elevation:.2f} m")
 
+        # Calcular fechas únicas
+        run_df['Date'] = run_df['Activity Date'].dt.date
+        run_df['YearWeek'] = run_df['Activity Date'].dt.strftime('%G-%V')
+        
+        # Racha de días consecutivos
+        dates = sorted(run_df['Date'].unique())
+        max_day_streak = current_day_streak = 1
+        for i in range(1, len(dates)):
+            if (dates[i] - dates[i - 1]).days == 1:
+                current_day_streak += 1
+                max_day_streak = max(max_day_streak, current_day_streak)
+            else:
+                current_day_streak = 1
+        
+        # Racha actual de días
+        today = dates[-1]
+        streak = 1
+        for i in range(len(dates) - 2, -1, -1):
+            if (today - dates[i]).days == streak:
+                streak += 1
+            else:
+                break
+        current_day_streak_live = streak
+        
+        # Racha de semanas consecutivas
+        from datetime import datetime
+        
+        def week_to_date(week_str):
+            return datetime.strptime(week_str + '-1', "%G-%V-%u")
+        
+        weeks = sorted(run_df['YearWeek'].unique())
+        week_dates = [week_to_date(w) for w in weeks]
+        
+        max_week_streak = current_week_streak = 1
+        for i in range(1, len(week_dates)):
+            if (week_dates[i] - week_dates[i - 1]).days <= 7:
+                current_week_streak += 1
+                max_week_streak = max(max_week_streak, current_week_streak)
+            else:
+                current_week_streak = 1
+        
+        # Racha actual de semanas
+        streak = 1
+        latest = week_dates[-1]
+        for i in range(len(week_dates) - 2, -1, -1):
+            expected = latest - timedelta(weeks=streak)
+            if week_dates[i] == expected:
+                streak += 1
+            else:
+                break
+        current_week_streak_live = streak
+        
+        # Mostrar
+        st.markdown("### 🔁 Running Streaks")
+        st.write(f"🏅 **Mayor racha de días seguidos corriendo**: {max_day_streak} días")
+        st.write(f"📅 **Mayor racha de semanas seguidas corriendo**: {max_week_streak} semanas")
+        st.write(f"📌 **Racha actual de días**: {current_day_streak_live} días")
+        st.write(f"📆 **Racha actual de semanas**: {current_week_streak_live} semanas")
+
+
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
         # Prepare monthly data
