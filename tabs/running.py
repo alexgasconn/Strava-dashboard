@@ -39,74 +39,10 @@ def render(df):
         st.write(f"Total Time: {run_df['Moving Time'].sum():.2f} hours")
         st.write(f"Total Elevation: {run_df['Elevation Gain'].sum():.2f} m")
 
-
-
-
-
-    st.write(run_df.head(10))
-    col1, col2, col3 = st.columns([6, 6, 3])
-    with col1:
-        scatter = alt.Chart(run_df).mark_circle(size=60).encode(
-            x=alt.X('Pace', title='Pace (min/km)',
-                    scale=alt.Scale(domain=[run_df['Pace'].min()-1, run_df['Pace'].max()+1])),
-            y=alt.Y('Distance', title='Distance (Km)', scale=alt.Scale(
-                domain=[0, run_df['Distance'].max()+1])),
-            color=alt.Color('Average Heart Rate:Q', scale=alt.Scale(
-                scheme='greens'), legend=None),
-            tooltip=['Pace', 'Distance', 'Average Heart Rate', 'Activity Date']
-        ).properties(
-            title='Pace vs Distance',
-            width=400,
-            height=400
-        ).interactive()
-
-        avg_pace = run_df['Pace'].mean()
-        avg_distance = run_df['Distance'].mean()
-        avg_df = pd.DataFrame({'Pace': [avg_pace], 'Distance': [avg_distance]})
-
-        avg_point = alt.Chart(avg_df).mark_text(
-            text='✖',
-            fontSize=24,
-            color='darkgreen'
-        ).encode(
-            x='Pace',
-            y='Distance',
-            tooltip=['Pace', 'Distance']
-        )
-
-        chart = scatter + avg_point
-        st.altair_chart(chart, use_container_width=True)
-
-    with col2:
-        hist = alt.Chart(run_df).mark_bar().encode(
-            x=alt.X('Average Heart Rate:Q', bin=alt.Bin(
-                maxbins=20), title='Heart Rate'),
-            y=alt.Y('count()', title='Total Activities'),
-            color=alt.Color('Average Heart Rate:Q', bin=alt.Bin(maxbins=20),
-                            scale=alt.Scale(scheme='reds'), title='Heart Rate', legend=None)
-        ).properties(
-            title='Heart Rate Distribution',
-            width=400,
-            height=400
-        )
-
-        st.altair_chart(hist, use_container_width=True)
-
-    with col3:
-        st.write("### Total Summary")
-        total_activities = run_df.shape[0]
-        total_distance = run_df['Distance'].sum()
-        total_time = run_df['Moving Time'].sum()
-        total_elevation = run_df['Elevation Gain'].sum()
-        st.write(f"Total Activities: {total_activities}")
-        st.write(f"Total Distance: {total_distance:.2f} km")
-        st.write(f"Total Time: {total_time:.2f} hours")
-        st.write(f"Total Elevation: {total_elevation:.2f} m")
-
-        # Calcular fechas únicas
+        # Cálculo de rachas
         run_df['Date'] = run_df['Activity Date'].dt.date
         run_df['YearWeek'] = run_df['Activity Date'].dt.strftime('%G-%V')
-        
+
         # Racha de días consecutivos
         dates = sorted(run_df['Date'].unique())
         max_day_streak = current_day_streak = 1
@@ -116,7 +52,7 @@ def render(df):
                 max_day_streak = max(max_day_streak, current_day_streak)
             else:
                 current_day_streak = 1
-        
+
         # Racha actual de días
         today = dates[-1]
         streak = 1
@@ -126,16 +62,11 @@ def render(df):
             else:
                 break
         current_day_streak_live = streak
-        
+
         # Racha de semanas consecutivas
-        from datetime import datetime
-        
-        def week_to_date(week_str):
-            return datetime.strptime(week_str + '-1', "%G-%V-%u")
-        
         weeks = sorted(run_df['YearWeek'].unique())
-        week_dates = [week_to_date(w) for w in weeks]
-        
+        week_dates = [datetime.strptime(w + '-1', "%G-%V-%u") for w in weeks]
+
         max_week_streak = current_week_streak = 1
         for i in range(1, len(week_dates)):
             if (week_dates[i] - week_dates[i - 1]).days <= 7:
@@ -143,8 +74,7 @@ def render(df):
                 max_week_streak = max(max_week_streak, current_week_streak)
             else:
                 current_week_streak = 1
-        
-        # Racha actual de semanas
+
         streak = 1
         latest = week_dates[-1]
         for i in range(len(week_dates) - 2, -1, -1):
@@ -154,14 +84,12 @@ def render(df):
             else:
                 break
         current_week_streak_live = streak
-        
-        # Mostrar
-        st.markdown("### 🔁 Running Streaks")
-        st.write(f"🏅 **Mayor racha de días seguidos corriendo**: {max_day_streak} días")
-        st.write(f"📅 **Mayor racha de semanas seguidas corriendo**: {max_week_streak} semanas")
-        st.write(f"📌 **Racha actual de días**: {current_day_streak_live} días")
-        st.write(f"📆 **Racha actual de semanas**: {current_week_streak_live} semanas")
 
+        st.markdown("### \ud83c\udf01 Running Streaks")
+        st.write(f"\ud83c\udfc5 **Mayor racha de días seguidos corriendo**: {max_day_streak} días")
+        st.write(f"\ud83d\udcc5 **Mayor racha de semanas seguidas corriendo**: {max_week_streak} semanas")
+        st.write(f"\ud83d\udccc **Racha actual de días**: {current_day_streak_live} días")
+        st.write(f"\ud83d\udcc6 **Racha actual de semanas**: {current_week_streak_live} semanas")
 
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
