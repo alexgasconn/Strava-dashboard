@@ -131,6 +131,23 @@ def render(df):
     st.altair_chart(heatmap, use_container_width=True)
 
 
+    st.subheader("📅 Número de Actividades por Día")
+
+    daily_counts = df.groupby(df['Activity Date'].dt.date).size().reset_index(name='Activity Count')
+    
+    chart = alt.Chart(daily_counts).mark_bar().encode(
+        x=alt.X('Activity Date:T', title='Fecha'),
+        y=alt.Y('Activity Count:Q', title='Número de actividades'),
+        tooltip=['Activity Date:T', 'Activity Count:Q']
+    ).properties(
+        width=700,
+        height=300
+    )
+    
+    st.altair_chart(chart, use_container_width=True)
+
+
+
 
 
     
