@@ -33,6 +33,7 @@ with st.sidebar:
         mask = (pd.to_datetime(df['start_date']).dt.date >= start) & (pd.to_datetime(df['start_date']).dt.date <= end)
         df = df.loc[mask]
 
+
 # Tab navigation
 tabs = {
     "🏃🚴🏊 General": general,
