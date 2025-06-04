@@ -12,6 +12,12 @@ def render(df):
     run_df['Pace'] = (run_df['Moving Time'] / run_df['Distance']).round(2)
     run_df['Average Heart Rate'].fillna(run_df['Average Heart Rate'].rolling(5, min_periods=1).mean(), inplace=True)
 
+    gear_options = ['All'] + sorted(run_df['Activity Gear'].dropna().unique())
+    selected_gear = st.selectbox("Select Gear", gear_options)
+    
+    if selected_gear != 'All':
+        run_df = run_df[run_df['Activity Gear'] == selected_gear]
+
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
         scatter = alt.Chart(run_df).mark_circle(size=60).encode(
