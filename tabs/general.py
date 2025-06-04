@@ -66,66 +66,6 @@ def render(df):
             st.write(f"**Total Time:** {row['Total_Hours']} hours")
             st.write(f"**Total Activities:** {row['Count']}")
 
-    col1, col2 = st.columns([8, 6])
-    with col1:
-        time_view = st.radio("View by:", ["Month", "Week"], horizontal=True, key="time_view_heatmap")
-        if time_view == "Week":
-            heatmap_data = df.groupby(['Year', 'Week', 'Activity Type'])[
-                'Moving Time'].count().reset_index()
-            title = "Total Activities per Week"
-            x_label = "Week"
-        elif time_view == "Month":
-            heatmap_data = df.groupby(['Year', 'Month'])[
-                'Moving Time'].count().reset_index()
-            heatmap_data["Month"] = heatmap_data["Month"].astype(int)
-            month_order = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
-                           7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
-            heatmap_data["Month"] = heatmap_data["Month"].map(month_order)
-            month_categories = list(month_order.values())
-            heatmap_data["Month"] = pd.Categorical(
-                heatmap_data["Month"], categories=month_categories, ordered=True)
-            title = "Total Activities per Month"
-            x_label = "Month"
-        if time_view == "Month":
-            x_axis = alt.X("Month:O", title=x_label, sort=month_categories)
-        else:
-            x_axis = alt.X("Week:O", title=x_label)
-        heatmap = alt.Chart(heatmap_data).mark_rect().encode(
-            x=x_axis,
-            y=alt.Y("Year:O", title="Year"),
-            color=alt.Color("Moving Time:Q", scale=alt.Scale(scheme="oran"
-                                                             "ges"), legend=None),
-            tooltip=[
-                alt.Tooltip("Year:O"),
-                alt.Tooltip(time_view + ":O"),
-                alt.Tooltip("Moving Time:Q", title="Total Activities")
-            ]
-        ).properties(
-            title=title,
-            width=600,
-            height=400
-        )
-        st.altair_chart(heatmap, use_container_width=True)
-
-    with col2:
-        # Prepare data
-        activity_type_counts = df['Activity Type'].value_counts(
-        ).reset_index().head(4)
-        activity_type_counts.columns = ['Activity Type', 'Count']
-        # Create Altair Pie Chart
-        pie_chart = alt.Chart(activity_type_counts).mark_arc(innerRadius=0).encode(
-            theta=alt.Theta("Count:Q", title="Total Activities"),
-            color=alt.Color("Activity Type:N", legend=None,
-                            scale=alt.Scale(scheme="category10")),
-            tooltip=[alt.Tooltip("Activity Type:N"), alt.Tooltip(
-                "Count:Q", title="Total Activities")]
-        ).properties(
-            width=400,
-            height=400,
-            title="Activity Types Distribution"
-        )
-        st.altair_chart(pie_chart, use_container_width=True)
-
     # Second row: Summary Cards for Ride, Run, and Swim
     col_summary = st.columns(1)
     with col_summary[0]:
