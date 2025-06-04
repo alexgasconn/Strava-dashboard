@@ -149,6 +149,39 @@ def render(df):
                 st.write(f"**Total Time:** {row['Total_Hours']} hours")
                 st.write(f"**Total Activities:** {row['Count']}")
 
+    # 🔁 Activity Transitions Heatmap
+    st.subheader("🔁 Activity Transitions")
+
+    # Ordena por fecha
+    df_sorted = df.sort_values("Activity Date").reset_index(drop=True)
+
+    # Actividad actual y la siguiente
+    df_sorted['Current'] = df_sorted['Activity Type']
+    df_sorted['Next'] = df_sorted['Activity Type'].shift(-1)
+
+    # Elimina la última fila (no tiene siguiente)
+    df_transitions = df_sorted[:-1]
+
+    # Cuenta las transiciones
+    transition_counts = df_transitions.groupby(['Current', 'Next']).size().reset_index(name='Count')
+
+    # Heatmap
+    heatmap = alt.Chart(transition_counts).mark_rect().encode(
+        x=alt.X('Next:N', title='Next Activity'),
+        y=alt.Y('Current:N', title='Current Activity'),
+        color=alt.Color('Count:Q', scale=alt.Scale(scheme='blues')),
+        tooltip=['Current', 'Next', 'Count']
+    ).properties(
+        width=500,
+        height=400,
+        title="Activity Transition Heatmap"
+    )
+
+    st.altair_chart(heatmap, use_container_width=True)
+
+
+
+    
     # Layout: 4 filters in a row
     col1, col2, col3, col4 = st.columns([3, 3, 3, 3])
 
