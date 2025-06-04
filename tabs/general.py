@@ -91,21 +91,32 @@ def render(df):
 
     # 🔁 Activity Transitions Heatmap
     st.subheader("🔁 Activity Transitions")
-
-    # Ordena por fecha
-    df_sorted = df.sort_values("Activity Date").reset_index(drop=True)
-
-    # Actividad actual y la siguiente
-    df_sorted['Current'] = df_sorted['Activity Type']
-    df_sorted['Next'] = df_sorted['Activity Type'].shift(-1)
-
-    # Elimina la última fila (no tiene siguiente)
-    df_transitions = df_sorted[:-1]
-
-    # Cuenta las transiciones
+    
+    mode = st.radio("Transition Mode", ["Chronological", "Same Day (No Repeats)"], horizontal=True)
+    
+    if mode == "Chronological":
+        df_sorted = df.sort_values("Activity Date").reset_index(drop=True)
+        df_sorted['Current'] = df_sorted['Activity Type']
+        df_sorted['Next'] = df_sorted['Activity Type'].shift(-1)
+        df_transitions = df_sorted[:-1]
+    else:
+        # Agrupa por día y ordena actividades dentro de cada fecha
+        df_day = df.copy()
+        df_day['Date'] = df_day['Activity Date'].dt.date
+        df_day = df_day.sort_values(['Date', 'Activity Date'])
+    
+        # Quitar repes dentro del mismo día (por tipo)
+        df_day = df_day.drop_duplicates(subset=['Date', 'Activity Type'])
+    
+        # Crear transiciones dentro de cada día
+        df_day['Next'] = df_day.groupby('Date')['Activity Type'].shift(-1)
+        df_day['Current'] = df_day['Activity Type']
+        df_transitions = df_day.dropna(subset=['Next'])
+    
+    # Conteo
     transition_counts = df_transitions.groupby(['Current', 'Next']).size().reset_index(name='Count')
-
-    # Heatmap
+    
+    # Visualización
     heatmap = alt.Chart(transition_counts).mark_rect().encode(
         x=alt.X('Next:N', title='Next Activity'),
         y=alt.Y('Current:N', title='Current Activity'),
@@ -116,8 +127,9 @@ def render(df):
         height=400,
         title="Activity Transition Heatmap"
     )
-
+    
     st.altair_chart(heatmap, use_container_width=True)
+
 
 
 
