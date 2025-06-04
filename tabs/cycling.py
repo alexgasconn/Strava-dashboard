@@ -350,14 +350,26 @@ def render(df):
     st.dataframe(summary)
     
     # Gráfico (opcional)
-    chart = alt.Chart(summary).mark_bar().encode(
-        x=alt.X('Cycling Type:N', title='Tipo'),
-        y=alt.Y('Total Distance (km):Q', title='Distancia total'),
-        color='Cycling Type:N',
-        tooltip=['Cycling Type', 'Activity Count', 'Total Distance (km)']
+    st.markdown("### 📊 Ride Type Distribution")
+
+    metric_option = st.radio("Visualizar por:", ["Tiempo total", "Número de actividades"], horizontal=True)
+    
+    if metric_option == "Tiempo total":
+        metric_col = "Total_Time"
+        y_title = "Tiempo total (min)"
+    else:
+        metric_col = "Count"
+        y_title = "Número de actividades"
+    
+    bar_chart = alt.Chart(ride_summary).mark_bar().encode(
+        x=alt.X('Ride Type:N', title='Tipo de salida'),
+        y=alt.Y(f'{metric_col}:Q', title=y_title),
+        color='Ride Type:N',
+        tooltip=['Ride Type', metric_col]
     ).properties(width=500, height=300)
     
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(bar_chart, use_container_width=True)
+
 
 
 
@@ -385,10 +397,8 @@ def render(df):
     def classify_ride(row):
         if row['Distance'] == 0:
             return 'Indoor'
-        elif row['Dirt Distance'] > row['Paved Distance']:
+        elif row['Dirt Distance'] > row['Distance']*0.2:
             return 'MTB'
-        elif row['Dirt Distance'] > 0:
-            return 'Gravel'
         else:
             return 'Road'
     
