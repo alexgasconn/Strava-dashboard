@@ -326,18 +326,21 @@ def render(df):
 
 
     st.markdown("### Surface Ratio per Activity")
+    bike_df['Terrain'] = bike_df.apply(
+        lambda row: 'Dirt' if row['Dirt Distance'] > row['Paved Distance'] else 'Paved',
+        axis=1
+    )
+    
     surface_chart = alt.Chart(bike_df).mark_bar().encode(
         x=alt.X('Activity Date:T', title='Date'),
         y=alt.Y('Dirt Distance:Q', stack='normalize', title='Dirt vs Paved Ratio'),
-        color=alt.Color('Terrain', scale=alt.Scale(scheme='brownbluegreen')),
+        color=alt.Color('Terrain:N', scale=alt.Scale(scheme='brownbluegreen')),
         tooltip=['Activity Date:T', 'Distance:Q', 'Dirt Distance:Q', 'Paved Distance:Q']
-    ).transform_calculate(
-        Terrain="datum['Dirt Distance'] > datum['Paved Distance'] ? 'Dirt' : 'Paved'"
     ).properties(
         width=600,
         height=300
     )
-    st.altair_chart(surface_chart, use_container_width=True)
+
 
 
     import plotly.express as px
