@@ -26,8 +26,12 @@ with st.sidebar:
         min_date = df['Activity Date'].min().date()
         max_date = df['Activity Date'].max().date()
     
-        start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
-        end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
+        default_start = max(pd.to_datetime("2020-01-01").date(), min_date)  # evita que esté fuera de rango
+        default_end = max_date
+    
+        start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=default_start)
+        end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=default_end)
+
     
         if start_date > end_date:
             st.warning("Start date must be before end date")
