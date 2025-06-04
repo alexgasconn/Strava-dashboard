@@ -14,6 +14,13 @@ def render(df):
     bike_df['Dirt Distance'] = bike_df['Dirt Distance'].clip(lower=0)
     bike_df['Average Heart Rate'].fillna(bike_df['Average Heart Rate'].rolling(5, min_periods=1).mean(), inplace=True)
 
+    gear_options = ['All'] + sorted(bike_df['Activity Gear'].dropna().unique())
+    selected_gear = st.selectbox("Select Gear", gear_options)
+    
+    if selected_gear != 'All':
+        bike_df = bike_df[bike_df['Activity Gear'] == selected_gear]
+
+
     col1, col2, col3 = st.columns([6, 6, 3])
     with col1:
         scatter = alt.Chart(bike_df).mark_circle(color='brown', size=60).encode(
@@ -315,3 +322,85 @@ def render(df):
         st.altair_chart(scatter_speed, use_container_width=True)
     else:
         st.info("Max Speed data is not available in the dataset.")
+
+
+
+    st.markdown("### Surface Ratio per Activity")
+    surface_chart = alt.Chart(bike_df).mark_bar().encode(
+        x=alt.X('Activity Date:T', title='Date'),
+        y=alt.Y('Dirt Distance:Q', stack='normalize', title='Dirt vs Paved Ratio'),
+        color=alt.Color('Terrain', scale=alt.Scale(scheme='brownbluegreen')),
+        tooltip=['Activity Date:T', 'Distance:Q', 'Dirt Distance:Q', 'Paved Distance:Q']
+    ).transform_calculate(
+        Terrain="datum['Dirt Distance'] > datum['Paved Distance'] ? 'Dirt' : 'Paved'"
+    ).properties(
+        width=600,
+        height=300
+    )
+    st.altair_chart(surface_chart, use_container_width=True)
+
+
+    import plotly.express as px
+
+    latest_month = bike_df['YearMonth'].max()
+    month_stats = bike_df[bike_df['YearMonth'] == latest_month].agg({
+        'Distance': 'sum',
+        'Moving Time': 'sum',
+        'Elevation Gain': 'sum',
+        'Speed': 'mean',
+        'Average Heart Rate': 'mean'
+    }).round(2)
+    
+    radar_df = pd.DataFrame({
+        'Metric': month_stats.index,
+        'Value': month_stats.values
+    })
+    
+    fig = px.line_polar(radar_df, r='Value', theta='Metric', line_close=True, title=f'Summary for {latest_month.strftime("%b %Y")}')
+    st.plotly_chart(fig, use_container_width=True)
+
+    def classify_ride(row):
+        if row['Distance'] == 0:
+            return 'Indoor'
+        elif row['Dirt Distance'] > row['Paved Distance']:
+            return 'MTB'
+        elif row['Dirt Distance'] > 0:
+            return 'Gravel'
+        else:
+            return 'Road'
+    
+    bike_df['Ride Type'] = bike_df.apply(classify_ride, axis=1)
+
+
+
+
+    st.markdown("### 🚴 Ride Type Summary")
+
+    ride_summary = bike_df.groupby('Ride Type').agg(
+        Count=('Ride Type', 'size'),
+        Total_Distance=('Distance', 'sum'),
+        Total_Time=('Moving Time', 'sum'),
+        Total_Elevation=('Elevation Gain', 'sum')
+    ).reset_index()
+    
+    ride_summary['Total_Distance'] = ride_summary['Total_Distance'].round(2)
+    ride_summary['Total_Time'] = ride_summary['Total_Time'].round(2)
+    ride_summary['Total_Elevation'] = ride_summary['Total_Elevation'].round(0)
+    
+    st.dataframe(ride_summary)
+    
+    # Optional pie chart
+    ride_pie = alt.Chart(ride_summary).mark_arc(innerRadius=50).encode(
+        theta='Count:Q',
+        color='Ride Type:N',
+        tooltip=['Ride Type:N', 'Count:Q']
+    ).properties(
+        width=400,
+        height=400,
+        title='Ride Type Distribution'
+    )
+    st.altair_chart(ride_pie, use_container_width=True)
+
+
+
+
