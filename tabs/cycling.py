@@ -326,20 +326,39 @@ def render(df):
 
 
     st.markdown("### Surface Ratio per Activity")
+    # Asegurarse de que las columnas existen
+    required_cols = ['Activity Date', 'Dirt Distance', 'Paved Distance']
+    for col in required_cols:
+        if col not in bike_df.columns:
+            st.error(f"Missing column: {col}")
+            st.stop()
+    
+    # Eliminar NaNs y asegurarse de que los valores son numéricos
+    bike_df = bike_df.dropna(subset=['Dirt Distance', 'Paved Distance']).copy()
+    bike_df['Dirt Distance'] = pd.to_numeric(bike_df['Dirt Distance'], errors='coerce').fillna(0)
+    bike_df['Paved Distance'] = pd.to_numeric(bike_df['Paved Distance'], errors='coerce').fillna(0)
+    
+    # Calcular proporción y terreno
     bike_df['Terrain'] = bike_df.apply(
         lambda row: 'Dirt' if row['Dirt Distance'] > row['Paved Distance'] else 'Paved',
         axis=1
     )
     
+    # Crear gráfico
     surface_chart = alt.Chart(bike_df).mark_bar().encode(
         x=alt.X('Activity Date:T', title='Date'),
         y=alt.Y('Dirt Distance:Q', stack='normalize', title='Dirt vs Paved Ratio'),
         color=alt.Color('Terrain:N', scale=alt.Scale(scheme='brownbluegreen')),
-        tooltip=['Activity Date:T', 'Distance:Q', 'Dirt Distance:Q', 'Paved Distance:Q']
+        tooltip=['Activity Date:T', 'Dirt Distance:Q', 'Paved Distance:Q']
     ).properties(
         width=600,
-        height=300
+        height=300,
+        title="Surface Ratio per Activity"
     )
+    
+    st.subheader("Surface Ratio per Activity")
+    st.altair_chart(surface_chart, use_container_width=True)
+
 
 
 
