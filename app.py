@@ -19,19 +19,23 @@ with st.sidebar:
     df = preprocess_data(df)
 
     # Date filter
-    # if 'start_date' in df.columns:
-    min_date = pd.to_datetime(df['start_date']).min().date()
-    max_date = pd.to_datetime(df['start_date']).max().date()
-    start, end = st.date_input(
-        "Filter by date range",
-        [min_date, max_date],
-        min_value=min_date,
-        max_value=max_date
-    )
-    if isinstance(start, pd.Timestamp): start = start.date()
-    if isinstance(end, pd.Timestamp): end = end.date()
-    mask = (pd.to_datetime(df['start_date']).dt.date >= start) & (pd.to_datetime(df['start_date']).dt.date <= end)
-    df = df.loc[mask]
+    if 'Activity Date' in df.columns:
+        df['Activity Date'] = pd.to_datetime(df['Activity Date'], errors='coerce')
+        df = df.dropna(subset=['Activity Date'])
+    
+        min_date = df['Activity Date'].min().date()
+        max_date = df['Activity Date'].max().date()
+    
+        start_date = st.date_input("Start date", min_value=min_date, max_value=max_date, value=min_date)
+        end_date = st.date_input("End date", min_value=min_date, max_value=max_date, value=max_date)
+    
+        if start_date > end_date:
+            st.warning("Start date must be before end date")
+            st.stop()
+    
+        mask = (df['Activity Date'].dt.date >= start_date) & (df['Activity Date'].dt.date <= end_date)
+        df = df.loc[mask]
+
 
 
 # Tab navigation
