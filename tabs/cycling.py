@@ -369,7 +369,8 @@ def render(df):
         else:
             return 'Road'
     
-    bike_df['Ride Type'] = bike_df.apply(classify_ride, axis=1)
+    bike_df['Ride Type'] = bike_df.apply(lambda row: classify_ride(row), axis=1)
+
 
 
 
