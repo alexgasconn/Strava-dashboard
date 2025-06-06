@@ -12,7 +12,3 @@ serverAddress = "localhost"
 
 [theme]
 base = "light"
-
-# Lo importante:
-[general]
-mainPage = "app.py"
