@@ -1,6 +1,7 @@
 import streamlit as st
-import altair as alt
 import pandas as pd
+import altair as alt
+from datetime import datetime, timedelta
 
 def render(df):
     st.header("Time & Weather Analysis")
@@ -17,6 +18,29 @@ def render(df):
         5: '💨 Windy',
         6: '❄️ Snowy'
     }
+
+    # --- Add Filters ---
+    filter_cols = st.columns(2)
+    with filter_cols[0]:
+        day_filter = st.multiselect(
+            "Filter by Day of Week",
+            options=list(range(7)),
+            format_func=lambda x: dow_map[x],
+            default=list(range(7))
+        )
+    with filter_cols[1]:
+        month_filter = st.multiselect(
+            "Filter by Month",
+            options=list(month_map.keys()),
+            format_func=lambda x: month_map[x],
+            default=list(month_map.keys())
+        )
+
+    # Apply filters
+    if 'DayOfWeek' in df.columns:
+        df = df[df['DayOfWeek'].isin(day_filter)]
+    if 'Month' in df.columns:
+        df = df[df['Month'].isin(month_filter)]
 
     # Metrics
     col1, col2, col3, col4 = st.columns(4)
