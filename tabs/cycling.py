@@ -269,7 +269,7 @@ def render(df):
         ).interactive()
         st.altair_chart(scatter_speed, use_container_width=True)
     else:
-        st.info("Max Speed data is not available in the dataset.")
+        st.info("Max Speed data is not available in the dataset")
 
 
 

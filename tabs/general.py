@@ -302,6 +302,7 @@ def render(df):
 
     # For each activity calculate a relative effort, and then compute a fitness (CTL), FATIGUE (ATL), and FORM (TSB) score for each activity
 
+
     # 1. Calculate Relative Effort (TSS-like) for each activity
     # We'll use a simple formula: Relative Effort = (Moving Time in hours) * (Intensity Factor)
     # If Intensity Factor is not available, use a proxy (e.g., normalized speed or set to 1)
