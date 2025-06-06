@@ -6,6 +6,8 @@ def render(df):
     st.header("General Overview")
 
     col1, col2 = st.columns([8, 6])
+
+    # Heatmap month/week per year
     with col1:
         time_view = st.radio("View by:", ["Month", "Week"], horizontal=True, key="time_view")
         if time_view == "Week":
@@ -34,6 +36,9 @@ def render(df):
         )
         st.altair_chart(heatmap, use_container_width=True)
 
+
+
+    # Pie chart for activity types
     with col2:
         activity_type_counts = df['Activity Type'].value_counts().reset_index().head(4)
         activity_type_counts.columns = ['Activity Type', 'Count']
@@ -48,7 +53,10 @@ def render(df):
         )
         st.altair_chart(pie_chart, use_container_width=True)
 
-    sports = ['Ride', 'Run', 'Swim']
+
+
+    # Summary of activities
+    sports = ['Ride', 'Run', 'Swim', 'Weight Training']
     filtered_df = df[df['Activity Type'].isin(sports)]
     aggregated_data = filtered_df.groupby('Activity Type').agg(
         Total_Distance=('Distance', 'sum'),
@@ -66,32 +74,11 @@ def render(df):
             st.write(f"**Total Time:** {row['Total_Hours']} hours")
             st.write(f"**Total Activities:** {row['Count']}")
 
-    # Second row: Summary Cards for Ride, Run, and Swim
-    col_summary = st.columns(1)
-    with col_summary[0]:
-        sports = ['Ride', 'Run', 'Swim']
-        filtered_df = df[df['Activity Type'].isin(
-            sports)]
-        aggregated_data = filtered_df.groupby('Activity Type').agg(
-            Total_Distance=('Distance', 'sum'),
-            Total_Time=('Moving Time', 'sum'),
-            Count=('Activity Type', 'count'),
-        ).reset_index()
-        aggregated_data['Total_Distance'] = aggregated_data['Total_Distance'].round(
-            0).astype(int) / 1000
-        aggregated_data['Total_Hours'] = (
-            aggregated_data['Total_Time'] / 3600).round(0).astype(int)
-        summary_cols = st.columns(len(aggregated_data))
-        for idx, row in aggregated_data.iterrows():
-            with summary_cols[idx]:
-                st.markdown(f"#### {row['Activity Type']}")
-                st.write(f"**Total Distance:** {row['Total_Distance']} km")
-                st.write(f"**Total Time:** {row['Total_Hours']} hours")
-                st.write(f"**Total Activities:** {row['Count']}")
 
-    # 🔁 Activity Transitions Heatmap
-    st.subheader("🔁 Activity Transitions")
-    
+
+    # Activity Transitions Heatmap
+    st.subheader("Activity Transitions")
+
     mode = st.radio("Transition Mode", ["Chronological", "Same Day (No Repeats)"], horizontal=True)
     
     if mode == "Chronological":
@@ -100,23 +87,16 @@ def render(df):
         df_sorted['Next'] = df_sorted['Activity Type'].shift(-1)
         df_transitions = df_sorted[:-1]
     else:
-        # Agrupa por día y ordena actividades dentro de cada fecha
         df_day = df.copy()
         df_day['Date'] = df_day['Activity Date'].dt.date
         df_day = df_day.sort_values(['Date', 'Activity Date'])
-    
-        # Quitar repes dentro del mismo día (por tipo)
         df_day = df_day.drop_duplicates(subset=['Date', 'Activity Type'])
-    
-        # Crear transiciones dentro de cada día
         df_day['Next'] = df_day.groupby('Date')['Activity Type'].shift(-1)
         df_day['Current'] = df_day['Activity Type']
         df_transitions = df_day.dropna(subset=['Next'])
     
-    # Conteo
     transition_counts = df_transitions.groupby(['Current', 'Next']).size().reset_index(name='Count')
     
-    # Visualización
     heatmap = alt.Chart(transition_counts).mark_rect().encode(
         x=alt.X('Next:N', title='Next Activity'),
         y=alt.Y('Current:N', title='Current Activity'),
@@ -131,20 +111,65 @@ def render(df):
     st.altair_chart(heatmap, use_container_width=True)
 
 
-    st.subheader("📅 Número de Actividades por Día")
 
-    daily_counts = df.groupby(df['Activity Date'].dt.date).size().reset_index(name='Activity Count')
-    
-    chart = alt.Chart(daily_counts).mark_bar().encode(
-        x=alt.X('Activity Date:T', title='Fecha'),
-        y=alt.Y('Activity Count:Q', title='Número de actividades'),
-        tooltip=['Activity Date:T', 'Activity Count:Q']
+    st.subheader("📅 Activities per Day: Distribution & Means")
+    col1, col2 = st.columns(2)
+
+    # Histogram: Number of days with X activities
+    with col1:
+        daily_counts = df.groupby(df['Activity Date'].dt.date).size().reset_index(name='Activity Count')
+        hist = alt.Chart(daily_counts).mark_bar().encode(
+            x=alt.X('Activity Count:O', title='Number of Activities in a Day'),
+            y=alt.Y('count():Q', title='Number of Days'),
+            tooltip=['Activity Count:O', alt.Tooltip('count():Q', title='Number of Days')]
+        ).properties(
+            width=350,
+            height=300,
+            title="Histogram: Activities per Day"
+        )
+        st.altair_chart(hist, use_container_width=True)
+
+    # Mean activities per day by month and year
+    with col2:
+        df['Year'] = df['Activity Date'].dt.year
+        df['Month'] = df['Activity Date'].dt.month
+        daily_counts['Year'] = pd.to_datetime(daily_counts['Activity Date']).dt.year
+        daily_counts['Month'] = pd.to_datetime(daily_counts['Activity Date']).dt.month
+
+        mean_by_month = daily_counts.groupby(['Year', 'Month'])['Activity Count'].mean().reset_index()
+        month_order = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                       7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
+        mean_by_month['MonthName'] = mean_by_month['Month'].map(month_order)
+        mean_by_month['MonthName'] = pd.Categorical(mean_by_month['MonthName'], categories=month_order.values(), ordered=True)
+
+        mean_chart = alt.Chart(mean_by_month).mark_line(point=True).encode(
+            x=alt.X('MonthName:N', sort=list(month_order.values()), title='Month'),
+            y=alt.Y('Activity Count:Q', title='Mean Activities per Day'),
+            color=alt.Color('Year:N', title='Year'),
+            tooltip=['Year:N', 'MonthName:N', alt.Tooltip('Activity Count:Q', title='Mean per Day')]
+        ).properties(
+            width=350,
+            height=300,
+            title="Mean Activities/Day by Month"
+        )
+        st.altair_chart(mean_chart, use_container_width=True)
+
+    # Mean activities per day by week (optional, below the row)
+    st.subheader("📊 Mean Activities per Day (by Week)")
+    daily_counts['Week'] = pd.to_datetime(daily_counts['Activity Date']).dt.isocalendar().week
+    mean_by_week = daily_counts.groupby(['Year', 'Week'])['Activity Count'].mean().reset_index()
+
+    week_chart = alt.Chart(mean_by_week).mark_line(point=True).encode(
+        x=alt.X('Week:O', title='Week'),
+        y=alt.Y('Activity Count:Q', title='Mean Activities per Day'),
+        color=alt.Color('Year:N', title='Year'),
+        tooltip=['Year:N', 'Week:O', alt.Tooltip('Activity Count:Q', title='Mean per Day')]
     ).properties(
         width=700,
-        height=300
+        height=300,
+        title="Mean Activities per Day by Week and Year"
     )
-    
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(week_chart, use_container_width=True)
 
 
 
