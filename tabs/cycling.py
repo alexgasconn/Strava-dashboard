@@ -22,80 +22,32 @@ def render(df):
 
 
     col1, col2, col3 = st.columns([6, 6, 3])
+
+    # Scatter plot of Speed vs Distance (with average point)
     with col1:
         scatter = alt.Chart(bike_df).mark_circle(color='brown', size=60).encode(
-            x=alt.X('Speed', title='Speed (km/h)'),
-            y=alt.Y('Distance', title='Distance (Km)'),
+            x=alt.X('Speed', title='Speed (km/h)', scale=alt.Scale(domain=[8, bike_df['Speed'].max() + 2])),
+            y=alt.Y('Distance', title='Distance (Km)', scale=alt.Scale(domain=[0, bike_df['Distance'].max() + 5])),
             tooltip=['Speed', 'Distance', 'Average Heart Rate', 'Activity Date']
-        ).properties(width=400, height=400).interactive()
+        ).properties(
+            width=400,
+            height=400,
+            title='Speed vs Distance'
+        ).interactive()
 
         avg_df = pd.DataFrame({'Speed': [bike_df['Speed'].mean()], 'Distance': [bike_df['Distance'].mean()]})
-        avg_point = alt.Chart(avg_df).mark_text(text='✖', fontSize=24, color='black').encode(
+        avg_point = alt.Chart(avg_df).mark_text(
+            text='✖', fontSize=24, color='black'
+        ).encode(
             x='Speed', y='Distance', tooltip=['Speed', 'Distance']
         )
+
         st.altair_chart(scatter + avg_point, use_container_width=True)
 
+    # Histogram of Average Heart Rate
     with col2:
         hist = alt.Chart(bike_df).mark_bar().encode(
-            x=alt.X('Average Heart Rate:Q', bin=alt.Bin(maxbins=20)),
-            y=alt.Y('count()'),
-            color=alt.Color('Average Heart Rate:Q', bin=alt.Bin(maxbins=20), scale=alt.Scale(scheme='reds'), legend=None)
-        ).properties(title='Heart Rate Distribution', width=400, height=400)
-        st.altair_chart(hist, use_container_width=True)
-
-    with col3:
-        st.write("### Total Summary")
-        total_paved = bike_df['Paved Distance'].sum()
-        total_dirt = bike_df['Dirt Distance'].sum()
-        total_dist = bike_df['Distance'].sum()
-        st.write(f"Total Activities: {bike_df.shape[0]}")
-        st.write(f"Total Distance: {total_dist:.2f} km")
-        st.write(f"Total Time: {bike_df['Moving Time'].sum():.2f} hours")
-        st.write(f"Total Elevation: {bike_df['Elevation Gain'].sum():.2f} m")
-        st.write(f"Paved: {total_paved:.2f} km ({(total_paved / total_dist) * 100:.1f}%)")
-        st.write(f"Dirt: {total_dirt:.2f} km ({(total_dirt / total_dist) * 100:.1f}%)")
-
-
-    col1, col2, col3 = st.columns([6, 6, 3])
-    with col1:
-        scatter = alt.Chart(bike_df).mark_circle(color='brown', size=60).encode(
-            x=alt.X('Speed', title='Speed (km/h)',
-                    scale=alt.Scale(domain=[8, bike_df['Speed'].max() + 2])),
-            y=alt.Y('Distance', title='Distance (Km)', scale=alt.Scale(
-                domain=[0, bike_df['Distance'].max() + 5])),
-            tooltip=['Speed', 'Distance',
-                     'Average Heart Rate', 'Activity Date']
-        ).properties(
-            width=400,
-            height=400
-        ).interactive()
-
-        avg_speed = bike_df['Speed'].mean()
-        avg_distance = bike_df['Distance'].mean()
-        avg_df = pd.DataFrame(
-            {'Speed': [avg_speed], 'Distance': [avg_distance]})
-
-        avg_point = alt.Chart(avg_df).mark_text(
-            text='✖',  # Unicode "X" symbol
-            fontSize=24,
-            color='black'
-        ).encode(
-            x='Speed',
-            y='Distance',
-            tooltip=['Speed', 'Distance']
-        ).properties(
-            title='Average Speed and Distance',
-            width=400,
-            height=400
-        ).interactive()
-
-        chart = scatter + avg_point
-        st.altair_chart(chart, use_container_width=True)
-
-    with col2:
-        hist = alt.Chart(bike_df).mark_bar().encode(
-            x=alt.X('Average Heart Rate:Q', bin=alt.Bin(
-                maxbins=20), title='Heart Rate'),
+            x=alt.X('Average Heart Rate:Q', bin=alt.Bin(maxbins=20), title='Heart Rate'),
             y=alt.Y('count()', title='Total Activities'),
             color=alt.Color('Average Heart Rate:Q', bin=alt.Bin(maxbins=20),
                             scale=alt.Scale(scheme='reds'), title='Heart Rate', legend=None)
@@ -104,34 +56,30 @@ def render(df):
             width=400,
             height=400
         )
-
         st.altair_chart(hist, use_container_width=True)
 
+    # Total Summary Stats
     with col3:
         st.write("### Total Summary")
         total_activities = bike_df.shape[0]
         total_distance = bike_df['Distance'].sum()
         total_time = bike_df['Moving Time'].sum()
         total_elevation = bike_df['Elevation Gain'].sum()
+        total_paved = bike_df['Paved Distance'].sum()
+        total_dirt = bike_df['Dirt Distance'].sum()
+        paved_percentage = (total_paved / total_distance) * 100 if total_distance else 0
+        dirt_percentage = (total_dirt / total_distance) * 100 if total_distance else 0
         st.write(f"Total Activities: {total_activities}")
         st.write(f"Total Distance: {total_distance:.2f} km")
         st.write(f"Total Time: {total_time:.2f} hours")
         st.write(f"Total Elevation: {total_elevation:.2f} m")
-
-        # Total paved and dirt distance with percentages
-        total_paved_distance = bike_df['Paved Distance'].sum()
-        total_dirt_distance = bike_df['Dirt Distance'].sum()
-        total_distance = bike_df['Distance'].sum()
-        paved_percentage = (total_paved_distance / total_distance) * 100
-        dirt_percentage = (total_dirt_distance / total_distance) * 100
-        st.write(
-            f"Total Paved Distance: {total_paved_distance:.2f} km ({paved_percentage:.2f}%)")
-        st.write(
-            f"Total Dirt Distance: {total_dirt_distance:.2f} km ({dirt_percentage:.2f}%)")
+        st.write(f"Paved: {total_paved:.2f} km ({paved_percentage:.1f}%)")
+        st.write(f"Dirt: {total_dirt:.2f} km ({dirt_percentage:.1f}%)")
 
     col1, col2, col3 = st.columns([6, 6, 3])
+
+    # Monthly Area Chart of Cumulative or Rolling Mean Time
     with col1:
-        # Option to select between cumulative sum or rolling mean
         plot_type = st.radio(
             "Plot Type", 
             options=["Cumulative", "Rolling Mean"], 
@@ -178,6 +126,7 @@ def render(df):
         ).interactive()
         st.altair_chart(area, use_container_width=True)
 
+    # Distance Histogram
     with col2:
         # distance histogram
         hist = alt.Chart(bike_df).mark_bar().encode(
@@ -193,8 +142,8 @@ def render(df):
         ).interactive()
         st.altair_chart(hist, use_container_width=True)
 
+    # Top 3 longest rides and top 3 rides with most elevation
     with col3:
-        # Top 3 longest rides and top 3 rides with most elevation
         top3_longest = bike_df.sort_values('Distance', ascending=False).head(3)
         top3_elevation = bike_df.sort_values(
             'Elevation Gain', ascending=False).head(3)
@@ -212,12 +161,11 @@ def render(df):
     # Add week column
     bike_df['Week'] = bike_df['Activity Date'].dt.isocalendar().week
     bike_df['Year'] = bike_df['Activity Date'].dt.isocalendar().year
-    bike_df['YearWeek'] = bike_df['Year'].astype(
-        str) + '-W' + bike_df['Week'].astype(str)
+    bike_df['YearWeek'] = bike_df['Year'].astype(str) + '-W' + bike_df['Week'].astype(str)
 
-    # Group by YearWeek and sum Distance
     weekly_df = bike_df.groupby(['YearWeek', 'Year', 'Week']).agg({
-        'Distance': 'sum'}).reset_index()
+        'Distance': 'sum'
+    }).reset_index()
 
     # Sort to ensure correct rolling
     weekly_df = weekly_df.sort_values(['Year', 'Week'])
@@ -227,8 +175,8 @@ def render(df):
         window=3, min_periods=1).mean()
 
     # For x-axis, convert Year and Week into a datetime
-    weekly_df['Date'] = pd.to_datetime(weekly_df['Year'].astype(
-        str) + weekly_df['Week'].astype(str) + '1', format='%G%V%u')
+    weekly_df['Date'] = pd.to_datetime(
+        weekly_df['YearWeek'] + '1', format='%G%V%u')
 
     # Altair chart
     base = alt.Chart(weekly_df).encode(
@@ -326,89 +274,15 @@ def render(df):
 
 
     # Clasificación por tipo de ciclismo
-    bike_df['Cycling Type'] = bike_df.apply(
-        lambda row: (
-            'Indoor' if row['Distance'] == 0
-            else 'MTB' if row['Dirt Distance'] > row['Paved Distance']
-            else 'Road'
-        ), axis=1
-    )
-    
-    # Conteo de actividades por tipo
-    count_by_type = bike_df['Cycling Type'].value_counts().reset_index()
-    count_by_type.columns = ['Cycling Type', 'Activity Count']
-    
-    # Distancia total por tipo
-    distance_by_type = bike_df.groupby('Cycling Type')['Distance'].sum().reset_index()
-    distance_by_type.columns = ['Cycling Type', 'Total Distance (km)']
-    
-    # Merge
-    summary = pd.merge(count_by_type, distance_by_type, on='Cycling Type')
-    
-    # Mostrar
-    st.subheader("🚴‍♂️ Resumen por tipo de ciclismo")
-    st.dataframe(summary)
-    
-    # Gráfico (opcional)
-    st.markdown("### 📊 Ride Type Distribution")
-
-    metric_option = st.radio("Visualizar por:", ["Tiempo total", "Número de actividades"], horizontal=True)
-    
-    if metric_option == "Tiempo total":
-        metric_col = "Total_Time"
-        y_title = "Tiempo total (min)"
-    else:
-        metric_col = "Count"
-        y_title = "Número de actividades"
-    
-    bar_chart = alt.Chart(ride_summary).mark_bar().encode(
-        x=alt.X('Ride Type:N', title='Tipo de salida'),
-        y=alt.Y(f'{metric_col}:Q', title=y_title),
-        color='Ride Type:N',
-        tooltip=['Ride Type', metric_col]
-    ).properties(width=500, height=300)
-    
-    st.altair_chart(bar_chart, use_container_width=True)
-
-
-
-
-
-
-    import plotly.express as px
-
-    latest_month = bike_df['YearMonth'].max()
-    month_stats = bike_df[bike_df['YearMonth'] == latest_month].agg({
-        'Distance': 'sum',
-        'Moving Time': 'sum',
-        'Elevation Gain': 'sum',
-        'Speed': 'mean',
-        'Average Heart Rate': 'mean'
-    }).round(2)
-    
-    radar_df = pd.DataFrame({
-        'Metric': month_stats.index,
-        'Value': month_stats.values
-    })
-    
-    fig = px.line_polar(radar_df, r='Value', theta='Metric', line_close=True, title=f'Summary for {latest_month.strftime("%b %Y")}')
-    st.plotly_chart(fig, use_container_width=True)
-
     def classify_ride(row):
         if row['Distance'] == 0:
             return 'Indoor'
-        elif row['Dirt Distance'] > row['Distance']*0.2:
+        elif row['Dirt Distance'] > row['Distance'] * 0.2:
             return 'MTB'
         else:
             return 'Road'
-    
-    bike_df['Ride Type'] = bike_df.apply(lambda row: classify_ride(row), axis=1)
 
-
-
-
-
-    st.markdown("### 🚴 Ride Type Summary")
+    bike_df['Ride Type'] = bike_df.apply(classify_ride, axis=1)
 
     ride_summary = bike_df.groupby('Ride Type').agg(
         Count=('Ride Type', 'size'),
@@ -416,24 +290,43 @@ def render(df):
         Total_Time=('Moving Time', 'sum'),
         Total_Elevation=('Elevation Gain', 'sum')
     ).reset_index()
-    
+
     ride_summary['Total_Distance'] = ride_summary['Total_Distance'].round(2)
     ride_summary['Total_Time'] = ride_summary['Total_Time'].round(2)
     ride_summary['Total_Elevation'] = ride_summary['Total_Elevation'].round(0)
-    
-    st.dataframe(ride_summary)
-    
-    # Optional pie chart
-    ride_pie = alt.Chart(ride_summary).mark_arc(innerRadius=50).encode(
-        theta='Count:Q',
-        color='Ride Type:N',
-        tooltip=['Ride Type:N', 'Count:Q']
-    ).properties(
-        width=400,
-        height=400,
-        title='Ride Type Distribution'
-    )
-    st.altair_chart(ride_pie, use_container_width=True)
+
+    st.markdown("### 🚴 Ride Type Summary")
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        metric_option = st.radio("Visualizar por:", ["Tiempo total", "Número de actividades"], horizontal=True)
+        if metric_option == "Tiempo total":
+            metric_col = "Total_Time"
+            y_title = "Tiempo total (horas)"
+        else:
+            metric_col = "Count"
+            y_title = "Número de actividades"
+
+        bar_chart = alt.Chart(ride_summary).mark_bar().encode(
+            x=alt.X('Ride Type:N', title='Tipo de salida'),
+            y=alt.Y(f'{metric_col}:Q', title=y_title),
+            color='Ride Type:N',
+            tooltip=['Ride Type', metric_col]
+        ).properties(width=400, height=300)
+        st.altair_chart(bar_chart, use_container_width=True)
+
+    with col2:
+        ride_pie = alt.Chart(ride_summary).mark_arc(innerRadius=50).encode(
+            theta='Count:Q',
+            color='Ride Type:N',
+            tooltip=['Ride Type:N', 'Count:Q']
+        ).properties(
+            width=300,
+            height=300,
+            title='Ride Type Distribution'
+        )
+        st.altair_chart(ride_pie, use_container_width=True)
 
 
 
