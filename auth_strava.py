@@ -2,9 +2,11 @@ import streamlit as st
 import requests
 import time
 
-CLIENT_ID = "143540"
-CLIENT_SECRET = "518b7ede285ff08227eaa9600f4ca502127e5665"
-REDIRECT_URI = "https://triathlon-dashboard.streamlit.app"  # usar URL real en cloud
+import streamlit as st
+
+CLIENT_ID = st.secrets["CLIENT_ID"]
+CLIENT_SECRET = st.secrets["CLIENT_SECRET"]
+REDIRECT_URI = st.secrets["REDIRECT_URI"]
 
 def get_auth_url():
     return (
